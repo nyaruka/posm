@@ -1,3 +1,4 @@
+*~
 *.py[cod]
 
 # C extensions
@@ -34,3 +35,9 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# virtual environment
+env
+
+# output files
+out/*
