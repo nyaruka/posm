@@ -34,7 +34,7 @@ def main():
     lyr_save = FeatureWriter('/tmp/out/world.shp')
 
     lyr_read = FeatureReader(
-        settings.get('osm_data_file'), 'admin_level = \'4\''
+        settings.get('osm_data_file'), 'admin_level = \'2\''
     )
 
     for feature in lyr_read.readData():
