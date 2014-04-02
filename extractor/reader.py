@@ -17,6 +17,7 @@ class FeatureReader(object):
         thereIsDataInLayer = True
 
         while thereIsDataInLayer:
+            print 'there is data in the layer'
             thereIsDataInLayer = False
             # set attribute filters - due to a bug in OSM driver when using
             # OGR_INTERLEAVED_READING
