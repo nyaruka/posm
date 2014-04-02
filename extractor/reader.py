@@ -6,9 +6,8 @@ class FeatureReader(object):
     Reads features from OSM file
     """
 
-    def __init__(self, filename, data_filter):
+    def __init__(self, filename):
         self.filename = filename
-        self.filter = data_filter
 
         self.datasource = ogr.Open(self.filename)
 
@@ -25,7 +24,7 @@ class FeatureReader(object):
 # http://trac.osgeo.org/gdal/changeset/26784/trunk/gdal/ogr/ogrsf_frmts/osm
             for iLayer in xrange(nLayerCount):
                 lyr = self.datasource.GetLayer(iLayer)
-                lyr.SetAttributeFilter(self.filter)
+                lyr.SetAttributeFilter('admin_level!=\'\'')
 
             # read data from layers using OGR_INTERLEAVED_READING method
             for iLayer in xrange(nLayerCount):

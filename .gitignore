@@ -44,3 +44,4 @@ out/*
 
 # yaml config files
 sources.yaml
+admin_mapping.yaml
