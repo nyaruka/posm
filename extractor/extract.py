@@ -41,6 +41,16 @@ gdal.PushErrorHandler('CPLLoggingErrorHandler')
 gdal.SetConfigOption("CPL_LOG_ERRORS", 'ON')
 
 
+def osm_id_exists(osm_id):
+    """
+    Check if osm_id exists
+    """
+    if osm_id:
+        return True
+    else:
+        return False
+
+
 def main():
     # setup index
     spat_index = rtree.index.Index()
@@ -56,16 +66,27 @@ def main():
 
     for feature in lyr_read.readData():
 
+        # get data
+        osm_id = feature.GetField('osm_id')
         admin_level = feature.GetField('admin_level')
         geom = shapely.wkb.loads(feature.GetGeometryRef().ExportToWkb())
-        name_en = feature.GetField('name:en') or feature.GetField('name')
+        name = feature.GetField('name')
 
+        # osm_id is crucial for establishing feature relationship
+        if not(osm_id_exists(osm_id)):
+            logger.warning('Feature without OSM_ID, discarding... "%s"', name)
+            continue
+
+        # process national level boundary
         if admin_level == '2':
+            # set custom attribute
+            feature.SetField('is_in', None)
+            # save the feature
             lyr_save.saveFeature(feature)
-            admin_level_0.update({feature_id: (name_en, geom)})
-            spat_index.insert(feature_id, geom.envelope.bounds)
+            admin_level_0.update({feature_id: (osm_id, geom)})
 
-            logger.debug('Indexed %s as %s record', name_en, feature_id)
+            spat_index.insert(feature_id, geom.envelope.bounds)
+            logger.debug('Index %s, record %s', feature_id, osm_id)
 
             feature_id += 1
 
@@ -73,17 +94,22 @@ def main():
     lyr_save.datasource.Destroy()
 
     # extract states
-    admin_level_1 = []
+    admin_level_1 = {}
 
     lyr_save = FeatureWriter('/tmp/out/admin_level_1.shp')
     lyr_read = FeatureReader(settings.get('sources').get('osm_data_file'))
 
     for feature in lyr_read.readData():
 
+        osm_id = feature.GetField('osm_id')
         admin_level = feature.GetField('admin_level')
-        is_in = feature.GetField('is_in')
-        name_en = feature.GetField('name:en') or feature.GetField('name')
+        name = feature.GetField('name')
         geom = shapely.wkb.loads(feature.GetGeometryRef().ExportToWkb())
+
+        # osm_id is crucial for establishing feature relationship
+        if not(osm_id_exists(osm_id)):
+            logger.warning('Feature without OSM_ID, discarding... "%s"', name)
+            continue
 
         # check spatial relationship
         if geom.is_valid:
@@ -94,28 +120,43 @@ def main():
 
             # do we have a hit?
             if len(intersection_set) > 0:
+                logger.debug(
+                    'Found %s intersections for %s', len(intersection_set),
+                    osm_id
+                )
                 for country_pk in intersection_set:
                     country = admin_level_0.get(country_pk)
                     # is the point within the country boundary
                     if geom_repr.within(country[1]):
                         is_in = country[0]
+
+            else:
+                logger.debug('No intersections for %s', osm_id)
+                is_in = None
         else:
             is_in = None
 
-        # determine admin level
+        # check for specific admin level mapping
         if is_in in admin_levels.get('per_country'):
             search_admin_level = (
                 admin_levels.get('per_country')
                 .get(is_in)
                 .get('admin_level_1')
             )
+            logger.info(
+                'Using custom admin_level for %s (%s)',
+                admin_levels.get('per_country')
+                .get(is_in).get('meta').get('name'), is_in
+
+            )
         else:
             search_admin_level = (
                 admin_levels.get('default').get('admin_level_1')
             )
 
-        # check feature admin level
+        # check current feature admin level
         if admin_level == str(search_admin_level):
+            # update internal relationship
             feature.SetField('is_in', is_in)
             lyr_save.saveFeature(feature)
 
