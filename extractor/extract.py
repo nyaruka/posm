@@ -1,20 +1,28 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
+import logging
+import logging.config
+
 from osgeo import gdal
 import rtree
+import shapely.wkb
 
 from settings import settings, admin_levels
 
-import shapely.wkb
+# setup logging
+logging.config.dictConfig(settings.get('logging'))
+logger = logging.getLogger(__file__)
+
 
 from writer import FeatureWriter
 from reader import FeatureReader
+
 
 # required for OSM data format
 gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'YES')
 # set 'OSM_CONFIG_fILE'
 gdal.SetConfigOption(
-    'OSM_CONFIG_FILE', settings.get('osm_config_file')
+    'OSM_CONFIG_FILE', settings.get('sources').get('osm_config_file')
 )
 # this option is required when parsing large datasets, at least in my
 # environment, I got lots of "Cannot read node ..." error messages
@@ -40,19 +48,25 @@ def main():
     admin_level_0 = {}
 
     lyr_save = FeatureWriter('/tmp/out/admin_level_0.shp')
-    lyr_read = FeatureReader(settings.get('osm_data_file'))
+    lyr_read = FeatureReader(settings.get('sources').get('osm_data_file'))
 
     feature_id = 0
+
+    logger.info('Started exporting admin_level_0 boundaries!')
+
     for feature in lyr_read.readData():
 
         admin_level = feature.GetField('admin_level')
         geom = shapely.wkb.loads(feature.GetGeometryRef().ExportToWkb())
-        name_en = feature.GetField('name:en')
+        name_en = feature.GetField('name:en') or feature.GetField('name')
 
         if admin_level == '2':
             lyr_save.saveFeature(feature)
             admin_level_0.update({feature_id: (name_en, geom)})
             spat_index.insert(feature_id, geom.envelope.bounds)
+
+            logger.debug('Indexed %s as %s record', name_en, feature_id)
+
             feature_id += 1
 
     lyr_read.datasource.Destroy()
@@ -62,7 +76,7 @@ def main():
     admin_level_1 = []
 
     lyr_save = FeatureWriter('/tmp/out/admin_level_1.shp')
-    lyr_read = FeatureReader(settings.get('osm_data_file'))
+    lyr_read = FeatureReader(settings.get('sources').get('osm_data_file'))
 
     for feature in lyr_read.readData():
 

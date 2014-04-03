@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__file__)
+
 from osgeo import ogr
 
 
@@ -10,14 +13,17 @@ class FeatureReader(object):
         self.filename = filename
 
         self.datasource = ogr.Open(self.filename)
+        logger.debug('Opening datasource: %s', self.filename)
 
     def readData(self):
         # prepare for the layer/feature iteration
         nLayerCount = self.datasource.GetLayerCount()
         thereIsDataInLayer = True
 
+        # simple feature counter
+        featureCount = 0
+
         while thereIsDataInLayer:
-            print 'there is data in the layer'
             thereIsDataInLayer = False
             # set attribute filters - due to a bug in OSM driver when using
             # OGR_INTERLEAVED_READING
@@ -46,9 +52,17 @@ class FeatureReader(object):
                         pass
                     else:
                         # has 'admin_level' tag - yield feature
+                        featureCount += 1
+                        if featureCount % 1000 == 0:
+                            logger.info('Features read: %s', featureCount)
+
+                        # yield feature
                         yield feat
 
                     # force feature removal - required for INTERLEAVED_READING
                     feat.Destroy()
                     # get the next feature
                     feat = lyr.GetNextFeature()
+
+        # total features
+        logger.info('Total features read: %s', featureCount)

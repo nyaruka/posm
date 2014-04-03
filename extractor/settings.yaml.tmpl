@@ -1,0 +1,42 @@
+sources:
+    osm_config_file: boundary.ini
+
+    osm_data_file: /data/africa-latest-admin.pbf
+
+# logging setup
+logging:
+    version: 1
+    disable_existing_loggers: True
+    formatters:
+        simple:
+            format: '%(levelname)s %(message)s'
+        verbose:
+            format: '%(levelname)s %(asctime)s %(module)s %(message)s'
+            datefmt: '%Y/%m/%d %H:%M:%S'
+
+    handlers:
+        console:
+            class: logging.StreamHandler
+            formatter: simple
+            level: DEBUG
+            stream: ext://sys.stdout
+        file:
+            class : logging.FileHandler
+            formatter: verbose
+            level: DEBUG
+            mode: w
+            filename: /tmp/export.log
+
+    loggers:
+        extract:
+            level: DEBUG
+            handlers:
+                - console
+
+    root:
+        level: DEBUG
+        handlers:
+            - console
+            - file
+
+

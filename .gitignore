@@ -43,5 +43,5 @@ env
 out/*
 
 # yaml config files
-sources.yaml
+settings.yaml
 admin_mapping.yaml

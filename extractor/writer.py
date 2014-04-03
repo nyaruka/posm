@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__file__)
+
 import sys
 from osgeo import ogr, osr
 
@@ -24,13 +27,14 @@ class FeatureWriter(object):
 
         # init layer
         self.createLayer()
+        logger.info('Layer created: %s', filename)
         self.createFields()
 
     def createLayer(self):
         self.datasource = self.driver.CreateDataSource(self.filename)
 
         if self.datasource is None:
-            print 'Datasource creation failed.\n'
+            logger.critical('Datasource creation failed.')
             sys.exit(1)
 
         self.layer = self.datasource.CreateLayer(
@@ -39,7 +43,7 @@ class FeatureWriter(object):
         )
 
         if self.layer is None:
-            print 'Layer creation failed.\n'
+            logger.critical('Layer creation failed.')
             sys.exit(1)
 
     def defineFields(self):
@@ -63,7 +67,7 @@ class FeatureWriter(object):
     def createFields(self):
         for field in self.defineFields():
             if self.layer.CreateField(field) != 0:
-                print 'Creating field failed.\n'
+                logger.error('Creating field failed.')
                 sys.exit(1)
 
     def saveFeature(self, feat):
