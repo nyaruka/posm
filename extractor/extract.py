@@ -52,9 +52,32 @@ def osm_id_exists(osm_id):
         return False
 
 
+def intersect_geom(geom, index, mapping, osm_id):
+    """
+    Intersect geom with data
+    """
+    intersection_set = list(index.intersection(geom.bounds))
+
+    # do we have a hit?
+    if len(intersection_set) > 0:
+        logger.debug(
+            'Found %s intersections for %s', len(intersection_set),
+            osm_id
+        )
+        for country_pk in intersection_set:
+            country = mapping.get(country_pk)
+            # is the point within the country boundary
+            if geom.within(country[1]):
+                return country[0]
+
+    else:
+        logger.debug('No intersections for %s', osm_id)
+        return None
+
+
 def main():
     # setup index
-    spat_index = rtree.index.Index()
+    spat_index_0 = rtree.index.Index()
     # extract countries
     admin_level_0 = {}
 
@@ -86,7 +109,7 @@ def main():
             lyr_save.saveFeature(feature)
             admin_level_0.update({feature_id: (osm_id, geom)})
 
-            spat_index.insert(feature_id, geom.envelope.bounds)
+            spat_index_0.insert(feature_id, geom.envelope.bounds)
             logger.debug('Index %s, record %s', feature_id, osm_id)
 
             feature_id += 1
@@ -96,6 +119,10 @@ def main():
 
     # extract states
     admin_level_1 = {}
+    # create index
+    spat_index_1 = rtree.index.Index()
+
+    feature_id = 0
 
     lyr_save = FeatureWriter('/tmp/out/admin_level_1.shp')
     lyr_read = FeatureReader(settings.get('sources').get('osm_data_file'))
@@ -117,27 +144,16 @@ def main():
             # representative point is guaranteed within polygon
             geom_repr = geom.representative_point()
             # check index intersection
-            intersection_set = list(spat_index.intersection(geom_repr.bounds))
 
-            # do we have a hit?
-            if len(intersection_set) > 0:
-                logger.debug(
-                    'Found %s intersections for %s', len(intersection_set),
-                    osm_id
-                )
-                for country_pk in intersection_set:
-                    country = admin_level_0.get(country_pk)
-                    # is the point within the country boundary
-                    if geom_repr.within(country[1]):
-                        is_in = country[0]
+            is_in = intersect_geom(
+                geom_repr, spat_index_0, admin_level_0, osm_id
+            )
 
-            else:
-                logger.debug('No intersections for %s', osm_id)
-                is_in = None
         else:
             # geometry is not valid
             logger.warning('%s not valid: %s', osm_id, explain_validity(geom))
             is_in = None
+            continue
 
         # check for specific admin level mapping
         if is_in in admin_levels.get('per_country'):
@@ -150,7 +166,6 @@ def main():
                 'Using custom admin_level for %s (%s)',
                 admin_levels.get('per_country')
                 .get(is_in).get('meta').get('name'), is_in
-
             )
         else:
             search_admin_level = (
@@ -161,6 +176,75 @@ def main():
         if admin_level == str(search_admin_level):
             # update internal relationship
             feature.SetField('is_in', is_in)
+            lyr_save.saveFeature(feature)
+
+            admin_level_1.update({feature_id: (osm_id, geom)})
+
+            spat_index_1.insert(feature_id, geom.envelope.bounds)
+            logger.debug('Index %s, record %s', feature_id, osm_id)
+
+            feature_id += 1
+
+    lyr_read.datasource.Destroy()
+    lyr_save.datasource.Destroy()
+
+    # extract counties
+
+    lyr_save = FeatureWriter('/tmp/out/admin_level_2.shp')
+    lyr_read = FeatureReader(settings.get('sources').get('osm_data_file'))
+
+    for feature in lyr_read.readData():
+
+        osm_id = feature.GetField('osm_id')
+        admin_level = feature.GetField('admin_level')
+        name = feature.GetField('name')
+        geom = shapely.wkb.loads(feature.GetGeometryRef().ExportToWkb())
+
+        # osm_id is crucial for establishing feature relationship
+        if not(osm_id_exists(osm_id)):
+            logger.warning('Feature without OSM_ID, discarding... "%s"', name)
+            continue
+
+        # check spatial relationship
+        if geom.is_valid:
+            # representative point is guaranteed within polygon
+            geom_repr = geom.representative_point()
+            # check index intersection
+            is_in = intersect_geom(
+                geom_repr, spat_index_0, admin_level_0, osm_id
+            )
+
+            is_in_state = intersect_geom(
+                geom_repr, spat_index_1, admin_level_1, osm_id
+            )
+
+        else:
+            # geometry is not valid
+            logger.warning('%s not valid: %s', osm_id, explain_validity(geom))
+            is_in = None
+            continue
+
+        # check for specific admin level mapping
+        if is_in in admin_levels.get('per_country'):
+            search_admin_level = (
+                admin_levels.get('per_country')
+                .get(is_in)
+                .get('admin_level_2')
+            )
+            logger.info(
+                'Using custom admin_level for %s (%s)',
+                admin_levels.get('per_country')
+                .get(is_in).get('meta').get('name'), is_in
+            )
+        else:
+            search_admin_level = (
+                admin_levels.get('default').get('admin_level_2')
+            )
+
+        # check current feature admin level
+        if admin_level == str(search_admin_level):
+            # update internal relationship
+            feature.SetField('is_in', is_in_state)
             lyr_save.saveFeature(feature)
 
     lyr_read.datasource.Destroy()
