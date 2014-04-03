@@ -6,6 +6,7 @@ import logging.config
 from osgeo import gdal
 import rtree
 import shapely.wkb
+from shapely.validation import explain_validity
 
 from settings import settings, admin_levels
 
@@ -134,6 +135,8 @@ def main():
                 logger.debug('No intersections for %s', osm_id)
                 is_in = None
         else:
+            # geometry is not valid
+            logger.warning('%s not valid: %s', osm_id, explain_validity(geom))
             is_in = None
 
         # check for specific admin level mapping
