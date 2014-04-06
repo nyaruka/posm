@@ -47,6 +47,35 @@ class FeatureWriter(object):
             sys.exit(1)
 
     def defineFields(self):
+        raise NotImplementedError
+
+    def createFields(self):
+        for field in self.defineFields():
+            if self.layer.CreateField(field) != 0:
+                logger.error('Creating field failed.')
+                sys.exit(1)
+
+    def saveFeature(self, feature_data, feature_geom):
+        """
+        simple save feature function
+        """
+        new_feat = ogr.Feature(self.layer.GetLayerDefn())
+
+        for field in feature_data:
+            new_feat.SetField(field[0], field[1])
+
+        # set geometry for the feature
+        new_feat.SetGeometry(feature_geom)
+        # add feature to the layer
+        self.layer.CreateFeature(new_feat)
+
+
+class AdminLevelWriter(FeatureWriter):
+    """
+    Define fields specific for the admin_level features
+    """
+
+    def defineFields(self):
         id_def = ogr.FieldDefn('osm_id', ogr.OFTString)
         id_def.SetWidth(254)
 
@@ -64,22 +93,23 @@ class FeatureWriter(object):
 
         return [id_def, name_def, name_en_def, adminlevel_def, is_in_def]
 
-    def createFields(self):
-        for field in self.defineFields():
-            if self.layer.CreateField(field) != 0:
-                logger.error('Creating field failed.')
-                sys.exit(1)
 
-    def saveFeature(self, feat):
-        """
-        simple save feature function
-        """
-        new_feat = ogr.Feature(self.layer.GetLayerDefn())
-        new_feat.SetField('osm_id', feat.GetField('osm_id'))
-        new_feat.SetField('name', feat.GetField('name'))
-        new_feat.SetField('name_en', feat.GetField('name:en'))
-        new_feat.SetField('adminlevel', feat.GetField('admin_level'))
-        new_feat.SetField('is_in', feat.GetField('is_in'))
-        new_feat.SetGeometry(feat.GetGeometryRef())
+class DiscardFeatureWriter(FeatureWriter):
+    """
+    Define fields specific for the discarded features
+    """
 
-        self.layer.CreateFeature(new_feat)
+    def defineFields(self):
+        id_def = ogr.FieldDefn('osm_id', ogr.OFTString)
+        id_def.SetWidth(254)
+
+        name_def = ogr.FieldDefn('name', ogr.OFTString)
+        name_def.SetWidth(254)
+
+        adminlevel_def = ogr.FieldDefn('adminlevel', ogr.OFTString)
+        adminlevel_def.SetWidth(254)
+
+        reason_def = ogr.FieldDefn('reason', ogr.OFTString)
+        reason_def.SetWidth(254)
+
+        return [id_def, name_def, adminlevel_def, reason_def]

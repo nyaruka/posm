@@ -5,13 +5,14 @@ import shapely.wkb
 from shapely.validation import explain_validity
 
 
-def osm_id_exists(osm_id):
+def osm_id_exists(osm_id, name):
     """
     Check if osm_id exists
     """
     if osm_id:
         return True
     else:
+        logger.warning('Feature without OSM_ID, discarding... "%s"', name)
         return False
 
 
@@ -38,22 +39,23 @@ def intersect_geom(geom, index, mapping, osm_id):
         return None
 
 
-def check_geom(geom, osm_id):
+def check_bad_geom(geom, osm_id):
     """
     Check if geom is valid
     """
     if geom.IsValid():
-        return True
+        return False
     else:
-        logger.error('Bad geometry for feature %s', osm_id)
         try:
             # check if we can parse the geom and determine why is geometry
             # invalid
-            tst_geom = shapely.wkb.loads(
-                geom.ExportToWkb()
+            tst_geom = shapely.wkb.loads(geom.ExportToWkb())
+            reason = explain_validity(tst_geom)
+            logger.error(
+                'Bad geometry for the feature %s, reason: %s', osm_id, reason
             )
-            logger.error('Validity reason: %s', explain_validity(tst_geom))
         except:
-            logger.error('Validity reason: BONKERS!')
+            reason = 'BONKERS!'
+            logger.critical('BONKERS geometry for the feature %s', osm_id)
 
-        return None
+        return reason

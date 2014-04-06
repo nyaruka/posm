@@ -3,34 +3,34 @@
 import logging
 import logging.config
 
-import shapely.wkb
-
 from exposm.settings import settings
 
 # setup logging, has to be after osmext.settings
 logging.config.dictConfig(settings.get('logging'))
 logger = logging.getLogger(__file__)
 
-from exposm.writer import FeatureWriter
-from exposm.reader import FeatureReader
-from exposm.utils import osm_id_exists, check_geom
+from exposm.writer import AdminLevelWriter, DiscardFeatureWriter
+from exposm.reader import AdminLevelReader
+from exposm.utils import osm_id_exists, check_bad_geom
 
 
 def main():
 
-    lyr_save0 = FeatureWriter('/tmp/out/admin_level_0.shp')
-    lyr_save1 = FeatureWriter('/tmp/out/admin_level_1.shp')
-    lyr_save2 = FeatureWriter('/tmp/out/admin_level_2.shp')
-    lyr_save3 = FeatureWriter('/tmp/out/admin_level_3.shp')
-    lyr_save4 = FeatureWriter('/tmp/out/admin_level_4.shp')
-    lyr_save5 = FeatureWriter('/tmp/out/admin_level_5.shp')
-    lyr_save6 = FeatureWriter('/tmp/out/admin_level_6.shp')
-    lyr_save7 = FeatureWriter('/tmp/out/admin_level_7.shp')
-    lyr_save8 = FeatureWriter('/tmp/out/admin_level_8.shp')
-    lyr_save9 = FeatureWriter('/tmp/out/admin_level_9.shp')
-    lyr_save10 = FeatureWriter('/tmp/out/admin_level_10.shp')
+    lyr_discard = DiscardFeatureWriter('/tmp/out/discarded.shp')
 
-    lyr_read = FeatureReader(settings.get('sources').get('osm_data_file'))
+    lyr_save0 = AdminLevelWriter('/tmp/out/admin_level_0.shp')
+    lyr_save1 = AdminLevelWriter('/tmp/out/admin_level_1.shp')
+    lyr_save2 = AdminLevelWriter('/tmp/out/admin_level_2.shp')
+    lyr_save3 = AdminLevelWriter('/tmp/out/admin_level_3.shp')
+    lyr_save4 = AdminLevelWriter('/tmp/out/admin_level_4.shp')
+    lyr_save5 = AdminLevelWriter('/tmp/out/admin_level_5.shp')
+    lyr_save6 = AdminLevelWriter('/tmp/out/admin_level_6.shp')
+    lyr_save7 = AdminLevelWriter('/tmp/out/admin_level_7.shp')
+    lyr_save8 = AdminLevelWriter('/tmp/out/admin_level_8.shp')
+    lyr_save9 = AdminLevelWriter('/tmp/out/admin_level_9.shp')
+    lyr_save10 = AdminLevelWriter('/tmp/out/admin_level_10.shp')
+
+    lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 
     logger.info('Started exporting admin_level_0 boundaries!')
 
@@ -40,55 +40,78 @@ def main():
         osm_id = feature.GetField('osm_id')
         admin_level = feature.GetField('admin_level')
         name = feature.GetField('name')
+        name_en = feature.GetField('name:en')
         geom = feature.GetGeometryRef()
 
-        if check_geom(geom, osm_id):
-            geom = shapely.wkb.loads(feature.GetGeometryRef().ExportToWkb())
-        else:
+        bad_geom = check_bad_geom(geom, osm_id)
+        # BONKERS features usually crash QGIS, we need to skip those
+        if bad_geom and bad_geom != 'BONKERS!':
+            feature_data = [
+                ('osm_id', osm_id),
+                ('name', name),
+                ('adminlevel', admin_level),
+                ('reason', bad_geom)
+            ]
+            lyr_discard.saveFeature(feature_data, geom)
             # skip further processing
+            continue
+        elif bad_geom == 'BONKERS!':
             continue
 
         # osm_id is crucial for establishing feature relationship
-        if not(osm_id_exists(osm_id)):
+        if not(osm_id_exists(osm_id, name)):
             logger.warning('Feature without OSM_ID, discarding... "%s"', name)
+            feature_data = [
+                ('osm_id', osm_id),
+                ('name', name),
+                ('adminlevel', admin_level),
+                ('reason', 'Feature without OSM_ID!')
+            ]
+            lyr_discard.saveFeature(feature_data, geom)
             continue
 
-        feature.SetField('is_in', None)
+        feature_data = [
+            ('osm_id', osm_id),
+            ('name', name),
+            ('name_en', name_en),
+            ('adminlevel', admin_level),
+            ('is_in', None)
+        ]
 
         # process national level boundary
         if admin_level == '0':
             logger.debug('Writing admin_level=0, feature %s', osm_id)
-            lyr_save0.saveFeature(feature)
+            lyr_save0.saveFeature(feature_data, geom)
         if admin_level == '1':
             logger.debug('Writing admin_level=1, feature %s', osm_id)
-            lyr_save1.saveFeature(feature)
+            lyr_save1.saveFeature(feature_data, geom)
         if admin_level == '2':
             logger.debug('Writing admin_level=2, feature %s', osm_id)
-            lyr_save2.saveFeature(feature)
+            lyr_save2.saveFeature(feature_data, geom)
         if admin_level == '3':
             logger.debug('Writing admin_level=3, feature %s', osm_id)
-            lyr_save3.saveFeature(feature)
+            lyr_save3.saveFeature(feature_data, geom)
         if admin_level == '4':
             logger.debug('Writing admin_level=4, feature %s', osm_id)
-            lyr_save4.saveFeature(feature)
+            lyr_save4.saveFeature(feature_data, geom)
         if admin_level == '5':
             logger.debug('Writing admin_level=5, feature %s', osm_id)
-            lyr_save5.saveFeature(feature)
+            lyr_save5.saveFeature(feature_data, geom)
         if admin_level == '6':
             logger.debug('Writing admin_level=6, feature %s', osm_id)
-            lyr_save6.saveFeature(feature)
+            lyr_save6.saveFeature(feature_data, geom)
         if admin_level == '7':
             logger.debug('Writing admin_level=7, feature %s', osm_id)
-            lyr_save7.saveFeature(feature)
+            lyr_save7.saveFeature(feature_data, geom)
         if admin_level == '8':
             logger.debug('Writing admin_level=8, feature %s', osm_id)
-            lyr_save8.saveFeature(feature)
+            lyr_save8.saveFeature(feature_data, geom)
         if admin_level == '9':
             logger.debug('Writing admin_level=9, feature %s', osm_id)
-            lyr_save9.saveFeature(feature)
+            lyr_save9.saveFeature(feature_data, geom)
         if admin_level == '10':
             logger.debug('Writing admin_level=10, feature %s', osm_id)
-            lyr_save10.saveFeature(feature)
+            lyr_save10.saveFeature(feature_data, geom)
 
     lyr_read.datasource.Destroy()
     lyr_save0.datasource.Destroy()
@@ -102,6 +125,7 @@ def main():
     lyr_save8.datasource.Destroy()
     lyr_save9.datasource.Destroy()
     lyr_save10.datasource.Destroy()
+    lyr_discard.datasource.Destroy()
 
 if __name__ == '__main__':
     main()
