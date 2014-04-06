@@ -31,7 +31,7 @@ def intersect_geom(geom, index, mapping, osm_id):
         for country_pk in intersection_set:
             country = mapping.get(country_pk)
             # is the point within the country boundary
-            if geom.within(country[1]):
+            if country[1].contains(geom):
                 return country[0]
 
     else:
@@ -43,19 +43,19 @@ def check_bad_geom(geom, osm_id):
     """
     Check if geom is valid
     """
-    if geom.IsValid():
-        return False
-    else:
-        try:
-            # check if we can parse the geom and determine why is geometry
-            # invalid
-            tst_geom = shapely.wkb.loads(geom.ExportToWkb())
+    try:
+        # check if we can parse the geom and determine why is geometry
+        # invalid
+        tst_geom = shapely.wkb.loads(geom.ExportToWkb())
+        if tst_geom.is_valid:
+            return False
+        else:
             reason = explain_validity(tst_geom)
             logger.error(
                 'Bad geometry for the feature %s, reason: %s', osm_id, reason
             )
-        except:
-            reason = 'BONKERS!'
-            logger.critical('BONKERS geometry for the feature %s', osm_id)
+    except:
+        reason = 'BONKERS!'
+        logger.critical('BONKERS geometry for the feature %s', osm_id)
 
-        return reason
+    return reason

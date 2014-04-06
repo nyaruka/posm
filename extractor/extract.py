@@ -5,6 +5,7 @@ import logging.config
 
 import rtree
 import shapely.wkb
+from shapely.prepared import prep
 
 from exposm.settings import settings, admin_levels
 
@@ -57,7 +58,7 @@ def main():
                 ('is_in', None)
             ]
             lyr_save.saveFeature(feature_data, geom_raw)
-            admin_level_0.update({feature_id: (osm_id, geom)})
+            admin_level_0.update({feature_id: (osm_id, prep(geom))})
 
             spat_index_0.insert(feature_id, geom.envelope.bounds)
             logger.debug('Index %s, record %s', feature_id, osm_id)
@@ -129,7 +130,7 @@ def main():
             ]
             lyr_save.saveFeature(feature_data, geom_raw)
 
-            admin_level_1.update({feature_id: (osm_id, geom)})
+            admin_level_1.update({feature_id: (osm_id, prep(geom))})
 
             spat_index_1.insert(feature_id, geom.envelope.bounds)
             logger.debug('Index %s, record %s', feature_id, osm_id)
