@@ -3,6 +3,16 @@ sources:
 
     osm_data_file: /data/africa-latest-admin.pbf
 
+# gdal driver specific settings
+gdal:
+    # how much memory is gdal allowed to allocate
+    memory_limit: '4096'
+    # if memory is not enough, use this folder to store temporary files
+    tempfile_dir: '/tmp'
+    # show debug information, ON/OFF
+    debug: 'ON'
+    debug_file: '/tmp/gdal_log.log'
+
 # logging setup
 logging:
     version: 1
