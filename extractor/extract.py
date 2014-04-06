@@ -6,7 +6,6 @@ import logging.config
 from osgeo import gdal
 import rtree
 import shapely.wkb
-from shapely.validation import explain_validity
 
 from settings import settings, admin_levels
 
@@ -17,7 +16,7 @@ logger = logging.getLogger(__file__)
 
 from writer import FeatureWriter
 from reader import FeatureReader
-
+from utils import osm_id_exists, check_geom, intersect_geom
 
 # required for OSM data format
 gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'YES')
@@ -28,11 +27,15 @@ gdal.SetConfigOption(
 # this option is required when parsing large datasets, at least in my
 # environment, I got lots of "Cannot read node ..." error messages
 # http://svn.osgeo.org/gdal/trunk/gdal/ogr/ogrsf_frmts/osm/ogrosmdatasource.cpp
-gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'NO')
+# gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'NO')
 
 # large datasets require a lot of disk space, set temporary directory with
 # enough free space
 gdal.SetConfigOption('CPL_TMPDIR', '/tmp')
+
+# fine tune memory allocation for tmp data, 4Gb should be enough for current
+# admin_level extract
+gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', '4096')
 
 # setup logging options
 gdal.SetConfigOption('CPL_TIMESTAMP', 'ON')
@@ -40,39 +43,6 @@ gdal.SetConfigOption('CPL_DEBUG', 'ON')
 gdal.SetConfigOption('CPL_LOG', '/tmp/gdal_log.log')
 gdal.PushErrorHandler('CPLLoggingErrorHandler')
 gdal.SetConfigOption("CPL_LOG_ERRORS", 'ON')
-
-
-def osm_id_exists(osm_id):
-    """
-    Check if osm_id exists
-    """
-    if osm_id:
-        return True
-    else:
-        return False
-
-
-def intersect_geom(geom, index, mapping, osm_id):
-    """
-    Intersect geom with data
-    """
-    intersection_set = list(index.intersection(geom.bounds))
-
-    # do we have a hit?
-    if len(intersection_set) > 0:
-        logger.debug(
-            'Found %s intersections for %s', len(intersection_set),
-            osm_id
-        )
-        for country_pk in intersection_set:
-            country = mapping.get(country_pk)
-            # is the point within the country boundary
-            if geom.within(country[1]):
-                return country[0]
-
-    else:
-        logger.debug('No intersections for %s', osm_id)
-        return None
 
 
 def main():
@@ -93,8 +63,13 @@ def main():
         # get data
         osm_id = feature.GetField('osm_id')
         admin_level = feature.GetField('admin_level')
-        geom = shapely.wkb.loads(feature.GetGeometryRef().ExportToWkb())
         name = feature.GetField('name')
+        geom_raw = feature.GetGeometryRef()
+
+        if not(check_geom(geom_raw, osm_id)):
+            # skip further processing
+            continue
+        geom = shapely.wkb.loads(geom_raw.ExportToWkb())
 
         # osm_id is crucial for establishing feature relationship
         if not(osm_id_exists(osm_id)):
@@ -132,7 +107,12 @@ def main():
         osm_id = feature.GetField('osm_id')
         admin_level = feature.GetField('admin_level')
         name = feature.GetField('name')
-        geom = shapely.wkb.loads(feature.GetGeometryRef().ExportToWkb())
+        geom_raw = feature.GetGeometryRef()
+
+        if not(check_geom(geom_raw, osm_id)):
+            # skip further processing
+            continue
+        geom = shapely.wkb.loads(geom_raw.ExportToWkb())
 
         # osm_id is crucial for establishing feature relationship
         if not(osm_id_exists(osm_id)):
@@ -140,20 +120,11 @@ def main():
             continue
 
         # check spatial relationship
-        if geom.is_valid:
-            # representative point is guaranteed within polygon
-            geom_repr = geom.representative_point()
-            # check index intersection
+        # representative point is guaranteed within polygon
+        geom_repr = geom.representative_point()
+        # check index intersection
 
-            is_in = intersect_geom(
-                geom_repr, spat_index_0, admin_level_0, osm_id
-            )
-
-        else:
-            # geometry is not valid
-            logger.warning('%s not valid: %s', osm_id, explain_validity(geom))
-            is_in = None
-            continue
+        is_in = intersect_geom(geom_repr, spat_index_0, admin_level_0, osm_id)
 
         # check for specific admin level mapping
         if is_in in admin_levels.get('per_country'):
@@ -198,31 +169,28 @@ def main():
         osm_id = feature.GetField('osm_id')
         admin_level = feature.GetField('admin_level')
         name = feature.GetField('name')
-        geom = shapely.wkb.loads(feature.GetGeometryRef().ExportToWkb())
+        geom_raw = feature.GetGeometryRef()
+
+        if not(check_geom(geom_raw, osm_id)):
+            # skip further processing
+            continue
+        geom = shapely.wkb.loads(geom_raw.ExportToWkb())
 
         # osm_id is crucial for establishing feature relationship
         if not(osm_id_exists(osm_id)):
             logger.warning('Feature without OSM_ID, discarding... "%s"', name)
             continue
 
-        # check spatial relationship
-        if geom.is_valid:
-            # representative point is guaranteed within polygon
-            geom_repr = geom.representative_point()
-            # check index intersection
-            is_in = intersect_geom(
-                geom_repr, spat_index_0, admin_level_0, osm_id
-            )
+        # representative point is guaranteed within polygon
+        geom_repr = geom.representative_point()
+        # check index intersection
+        is_in = intersect_geom(
+            geom_repr, spat_index_0, admin_level_0, osm_id
+        )
 
-            is_in_state = intersect_geom(
-                geom_repr, spat_index_1, admin_level_1, osm_id
-            )
-
-        else:
-            # geometry is not valid
-            logger.warning('%s not valid: %s', osm_id, explain_validity(geom))
-            is_in = None
-            continue
+        is_in_state = intersect_geom(
+            geom_repr, spat_index_1, admin_level_1, osm_id
+        )
 
         # check for specific admin level mapping
         if is_in in admin_levels.get('per_country'):
