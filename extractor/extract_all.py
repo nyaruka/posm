@@ -6,17 +6,15 @@ import logging.config
 from osgeo import gdal
 import shapely.wkb
 
-from settings import settings
+from exposm.settings import settings
 
-# setup logging
+# setup logging, has to be after osmext.settings
 logging.config.dictConfig(settings.get('logging'))
 logger = logging.getLogger(__file__)
 
-
-from writer import FeatureWriter
-from reader import FeatureReader
-from utils import osm_id_exists, check_geom
-
+from exposm.writer import FeatureWriter
+from exposm.reader import FeatureReader
+from exposm.utils import osm_id_exists, check_geom
 
 # required for OSM data format
 gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'YES')
