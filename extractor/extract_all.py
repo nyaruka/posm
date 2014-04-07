@@ -34,7 +34,7 @@ def main():
 
     logger.info('Started exporting admin_level_0 boundaries!')
 
-    for feature in lyr_read.readData():
+    for layer, feature in lyr_read.readData():
 
         # get data
         osm_id = feature.GetField('osm_id')

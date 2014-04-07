@@ -62,7 +62,7 @@ class FeatureReader(object):
                             logger.info('Features read: %s', featureCount)
 
                         # yield feature
-                        yield feat
+                        yield (lyr.GetName(), feat)
 
                     # force feature removal - required for INTERLEAVED_READING
                     feat.Destroy()

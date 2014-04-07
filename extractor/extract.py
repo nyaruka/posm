@@ -19,6 +19,7 @@ from exposm.utils import osm_id_exists, check_bad_geom, intersect_geom
 
 
 def main():
+    unusable_features = set()
     # setup index
     spat_index_0 = rtree.index.Index()
     # extract countries
@@ -31,7 +32,7 @@ def main():
 
     logger.info('Started exporting admin_level_0 boundaries!')
 
-    for feature in lyr_read.readData():
+    for layer, feature in lyr_read.readData():
 
         # get data
         osm_id = feature.GetField('osm_id')
@@ -43,6 +44,8 @@ def main():
         bad_geom = check_bad_geom(geom_raw, osm_id)
         # BONKERS features usually crash QGIS, we need to skip those
         if bad_geom or not(osm_id_exists(osm_id, name)):
+            # add bad geom to the list
+            unusable_features.add((layer, osm_id))
             # skip further processing
             continue
 
@@ -78,7 +81,7 @@ def main():
     lyr_save = AdminLevelWriter('/tmp/out/admin_level_1.shp')
     lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 
-    for feature in lyr_read.readData():
+    for layer, feature in lyr_read.readData():
 
         osm_id = feature.GetField('osm_id')
         admin_level = feature.GetField('admin_level')
@@ -86,10 +89,12 @@ def main():
         name_en = feature.GetField('name:en')
         geom_raw = feature.GetGeometryRef()
 
-        bad_geom = check_bad_geom(geom_raw, osm_id)
-        # BONKERS features usually crash QGIS, we need to skip those
-        # osm_id is crucial for establishing feature relationship
-        if bad_geom or not(osm_id_exists(osm_id, name)):
+        if (layer, osm_id) in unusable_features:
+            # skip this feature
+            logger.debug(
+                'Feature previously marked as unusable: %s-%s, skipping',
+                layer, osm_id
+            )
             continue
 
         geom = shapely.wkb.loads(geom_raw.ExportToWkb())
@@ -113,10 +118,13 @@ def main():
                 admin_levels.get('per_country')
                 .get(is_in).get('meta').get('name'), is_in
             )
-        else:
+        elif is_in:
             search_admin_level = (
                 admin_levels.get('default').get('admin_level_1')
             )
+        else:
+            # if we can't determine relationship, skip this feature
+            continue
 
         # check current feature admin level
         if admin_level == str(search_admin_level):
@@ -144,7 +152,7 @@ def main():
     lyr_save = AdminLevelWriter('/tmp/out/admin_level_2.shp')
     lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 
-    for feature in lyr_read.readData():
+    for layer, feature in lyr_read.readData():
 
         osm_id = feature.GetField('osm_id')
         admin_level = feature.GetField('admin_level')
@@ -152,10 +160,12 @@ def main():
         name_en = feature.GetField('name:en')
         geom_raw = feature.GetGeometryRef()
 
-        bad_geom = check_bad_geom(geom_raw, osm_id)
-        # BONKERS features usually crash QGIS, we need to skip those
-        if bad_geom or not(osm_id_exists(osm_id, name)):
-            # skip further processing
+        if (layer, osm_id) in unusable_features:
+            # skip this feature
+            logger.debug(
+                'Feature previously marked as unusable: %s-%s, skipping',
+                layer, osm_id
+            )
             continue
 
         geom = shapely.wkb.loads(geom_raw.ExportToWkb())
@@ -183,10 +193,13 @@ def main():
                 admin_levels.get('per_country')
                 .get(is_in).get('meta').get('name'), is_in
             )
-        else:
+        elif is_in:
             search_admin_level = (
                 admin_levels.get('default').get('admin_level_2')
             )
+        else:
+            # if we can't determine relationship, skip this feature
+            continue
 
         # check current feature admin level
         if admin_level == str(search_admin_level):
