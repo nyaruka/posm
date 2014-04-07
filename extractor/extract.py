@@ -113,11 +113,17 @@ def main():
                 .get(is_in)
                 .get('admin_level_1')
             )
-            logger.info(
-                'Using custom admin_level for %s (%s)',
-                admin_levels.get('per_country')
-                .get(is_in).get('meta').get('name'), is_in
-            )
+            if search_admin_level:
+                logger.info(
+                    'Using custom admin_level for %s (%s)',
+                    admin_levels.get('per_country')
+                    .get(is_in).get('meta').get('name'), is_in
+                )
+            else:
+                # use the default admin_level
+                search_admin_level = (
+                    admin_levels.get('default').get('admin_level_1')
+                )
         elif is_in:
             search_admin_level = (
                 admin_levels.get('default').get('admin_level_1')
@@ -188,16 +194,26 @@ def main():
                 .get(is_in)
                 .get('admin_level_2')
             )
-            logger.info(
-                'Using custom admin_level for %s (%s)',
-                admin_levels.get('per_country')
-                .get(is_in).get('meta').get('name'), is_in
-            )
+            if search_admin_level:
+                logger.info(
+                    'Using custom admin_level for %s (%s)',
+                    admin_levels.get('per_country')
+                    .get(is_in).get('meta').get('name'), is_in
+                )
+            else:
+                # use the default admin_level
+                search_admin_level = (
+                    admin_levels.get('default').get('admin_level_2')
+                )
         elif is_in:
             search_admin_level = (
                 admin_levels.get('default').get('admin_level_2')
             )
         else:
+            # if we can't determine relationship, skip this feature
+            continue
+
+        if not(is_in_state):
             # if we can't determine relationship, skip this feature
             continue
 
