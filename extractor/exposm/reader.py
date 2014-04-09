@@ -27,7 +27,7 @@ class FeatureReader(object):
             lyr = self.datasource.GetLayer(iLayer)
             lyr.SetAttributeFilter(self.attr_filter)
 
-    def test_conformity(self, feature):
+    def test_conformity(self, layer, feature):
         """
         There may be a special case where we need to test if feature conforms
         to specific rules
@@ -56,7 +56,7 @@ class FeatureReader(object):
                     thereIsDataInLayer = True
 
                     # if the feature conforms to the feature test then yield
-                    if self.test_conformity(feat):
+                    if self.test_conformity(lyr, feat):
                         featureCount += 1
                         if featureCount % 1000 == 0:
                             logger.info('Features read: %s', featureCount)
@@ -79,12 +79,9 @@ class AdminLevelReader(FeatureReader):
     """
     attr_filter = 'admin_level!=\'\''
 
-    def test_conformity(self, feature):
-        try:
-            # test if feature has 'admin_level' tag
-            # TODO: there is probably a nicer way to do this, check the API
-            feature.GetField('admin_level')
+    def test_conformity(self, layer, feature):
+        # if layer has admin_level, use this feature
+        if layer.GetLayerDefn().GetFieldIndex('admin_level') >= 0:
             return True
-        except:
-            # no 'admin_level' tag - do nothing
+        else:
             return False

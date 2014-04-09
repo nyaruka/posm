@@ -16,19 +16,19 @@ from exposm.utils import osm_id_exists, check_bad_geom
 
 def main():
 
-    lyr_discard = DiscardFeatureWriter('/tmp/out/discarded.shp')
+    lyr_discard = DiscardFeatureWriter.create_shp('discarded')
 
-    lyr_save0 = AdminLevelWriter('/tmp/out/admin_level_0.shp')
-    lyr_save1 = AdminLevelWriter('/tmp/out/admin_level_1.shp')
-    lyr_save2 = AdminLevelWriter('/tmp/out/admin_level_2.shp')
-    lyr_save3 = AdminLevelWriter('/tmp/out/admin_level_3.shp')
-    lyr_save4 = AdminLevelWriter('/tmp/out/admin_level_4.shp')
-    lyr_save5 = AdminLevelWriter('/tmp/out/admin_level_5.shp')
-    lyr_save6 = AdminLevelWriter('/tmp/out/admin_level_6.shp')
-    lyr_save7 = AdminLevelWriter('/tmp/out/admin_level_7.shp')
-    lyr_save8 = AdminLevelWriter('/tmp/out/admin_level_8.shp')
-    lyr_save9 = AdminLevelWriter('/tmp/out/admin_level_9.shp')
-    lyr_save10 = AdminLevelWriter('/tmp/out/admin_level_10.shp')
+    lyr_save0 = AdminLevelWriter.create_shp('admin_level_0')
+    lyr_save1 = AdminLevelWriter.create_shp('admin_level_1')
+    lyr_save2 = AdminLevelWriter.create_shp('admin_level_2')
+    lyr_save3 = AdminLevelWriter.create_shp('admin_level_3')
+    lyr_save4 = AdminLevelWriter.create_shp('admin_level_4')
+    lyr_save5 = AdminLevelWriter.create_shp('admin_level_5')
+    lyr_save6 = AdminLevelWriter.create_shp('admin_level_6')
+    lyr_save7 = AdminLevelWriter.create_shp('admin_level_7')
+    lyr_save8 = AdminLevelWriter.create_shp('admin_level_8')
+    lyr_save9 = AdminLevelWriter.create_shp('admin_level_9')
+    lyr_save10 = AdminLevelWriter.create_shp('admin_level_10')
 
     lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 

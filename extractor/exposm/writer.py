@@ -2,7 +2,10 @@ import logging
 logger = logging.getLogger(__file__)
 
 import sys
+import os.path
 from osgeo import ogr, osr
+
+from .settings import settings
 
 
 class FeatureWriter(object):
@@ -10,25 +13,30 @@ class FeatureWriter(object):
     Writes features to SHP file
     """
 
-    def __init__(
-            self, filename, filetype='SHP', autoremove=True, srs_epsg=4326):
+    @classmethod
+    def create_shp(cls, filename, *args, **kwargs):
+        """
+        Imports SacredSite data from a file (on disk)
+        """
+        shpWriter = cls(*args, **kwargs)
 
-        self.filename = filename
+        shpWriter.filename = os.path.join(
+            settings.get('exposm').get('shp_output_directory'),
+            '{}.shp'.format(filename)
+        )
+
+        shpWriter.driver = ogr.GetDriverByName('ESRI Shapefile')
+
+        shpWriter.createLayer()
+        return shpWriter
+
+    def __init__(self, autoremove=True, srs_epsg=4326):
+
         self.autoremove = autoremove
 
         # setup default SRS
         self.srs = osr.SpatialReference()
         self.srs.ImportFromEPSG(srs_epsg)
-
-        if filetype == 'SHP':
-            self.driver = ogr.GetDriverByName('ESRI Shapefile')
-        else:
-            raise NotImplemented
-
-        # init layer
-        self.createLayer()
-        logger.info('Layer created: %s', filename)
-        self.createFields()
 
     def createLayer(self):
         self.datasource = self.driver.CreateDataSource(self.filename)
@@ -45,6 +53,9 @@ class FeatureWriter(object):
         if self.layer is None:
             logger.critical('Layer creation failed.')
             sys.exit(1)
+
+        logger.info('Layer created: %s', self.filename)
+        self.createFields()
 
     def defineFields(self):
         raise NotImplementedError
