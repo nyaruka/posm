@@ -31,7 +31,6 @@ def main():
     feature_id = 0
 
     logger.info('Started exporting admin_level_0 boundaries!')
-
     for layer, feature in lyr_read.readData():
 
         # get data
@@ -40,6 +39,7 @@ def main():
         name = feature.GetField('name')
         name_en = feature.GetField('name:en')
         geom_raw = feature.GetGeometryRef()
+        feature_data = []
 
         bad_geom = check_bad_geom(geom_raw, osm_id)
         # BONKERS features usually crash QGIS, we need to skip those
@@ -61,9 +61,10 @@ def main():
                 ('is_in', None)
             ]
             lyr_save.saveFeature(feature_data, geom_raw)
-            admin_level_0.update({feature_id: (osm_id, prep(geom))})
-
-            spat_index_0.insert(feature_id, geom.envelope.bounds)
+            admin_level_0.update({osm_id: prep(geom)})
+            spat_index_0.insert(
+                feature_id, geom.envelope.bounds, obj=osm_id
+            )
             logger.debug('Index %s, record %s', feature_id, osm_id)
 
             feature_id += 1
@@ -82,12 +83,13 @@ def main():
     lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 
     for layer, feature in lyr_read.readData():
-
         osm_id = feature.GetField('osm_id')
         admin_level = feature.GetField('admin_level')
         name = feature.GetField('name')
         name_en = feature.GetField('name:en')
         geom_raw = feature.GetGeometryRef()
+
+        feature_data = []
 
         if (layer, osm_id) in unusable_features:
             # skip this feature
@@ -104,14 +106,12 @@ def main():
         geom_repr = geom.representative_point()
         # check index intersection
 
-        is_in = intersect_geom(geom_repr, spat_index_0, admin_level_0, osm_id)
+        is_in = intersect_geom(geom_repr, spat_index_0, admin_level_0)
 
         # check for specific admin level mapping
         if is_in in admin_levels.get('per_country'):
             search_admin_level = (
-                admin_levels.get('per_country')
-                .get(is_in)
-                .get('admin_level_1')
+                admin_levels['per_country'][is_in]['admin_level_1']
             )
             if search_admin_level:
                 logger.info(
@@ -122,11 +122,11 @@ def main():
             else:
                 # use the default admin_level
                 search_admin_level = (
-                    admin_levels.get('default').get('admin_level_1')
+                    admin_levels['default']['admin_level_1']
                 )
         elif is_in:
             search_admin_level = (
-                admin_levels.get('default').get('admin_level_1')
+                admin_levels['default']['admin_level_1']
             )
         else:
             # if we can't determine relationship, skip this feature
@@ -144,9 +144,10 @@ def main():
             ]
             lyr_save.saveFeature(feature_data, geom_raw)
 
-            admin_level_1.update({feature_id: (osm_id, prep(geom))})
-
-            spat_index_1.insert(feature_id, geom.envelope.bounds)
+            admin_level_1.update({osm_id: prep(geom)})
+            spat_index_1.insert(
+                feature_id, geom.envelope.bounds, obj=osm_id
+            )
             logger.debug('Index %s, record %s', feature_id, osm_id)
 
             feature_id += 1
@@ -166,6 +167,8 @@ def main():
         name_en = feature.GetField('name:en')
         geom_raw = feature.GetGeometryRef()
 
+        feature_data = []
+
         if (layer, osm_id) in unusable_features:
             # skip this feature
             logger.debug(
@@ -178,14 +181,10 @@ def main():
 
         # representative point is guaranteed within polygon
         geom_repr = geom.representative_point()
-        # check index intersection
-        is_in = intersect_geom(
-            geom_repr, spat_index_0, admin_level_0, osm_id
-        )
 
-        is_in_state = intersect_geom(
-            geom_repr, spat_index_1, admin_level_1, osm_id
-        )
+        is_in = intersect_geom(geom_repr, spat_index_0, admin_level_0)
+
+        is_in_state = intersect_geom(geom_repr, spat_index_1, admin_level_1)
 
         # check for specific admin level mapping
         if is_in in admin_levels.get('per_country'):

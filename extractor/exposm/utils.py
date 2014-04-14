@@ -16,26 +16,16 @@ def osm_id_exists(osm_id, name):
         return False
 
 
-def intersect_geom(geom, index, mapping, osm_id):
+def intersect_geom(geom, index, mapping):
     """
     Intersect geom with data
     """
-    intersection_set = list(index.intersection(geom.bounds))
 
-    # do we have a hit?
-    if len(intersection_set) > 0:
-        logger.debug(
-            'Found %s intersections for %s', len(intersection_set),
-            osm_id
-        )
-        for country_pk in intersection_set:
-            country = mapping.get(country_pk)
-            # is the point within the country boundary
-            if country[1].contains(geom):
-                return country[0]
-
+    for obj in index.intersection(geom.bounds, objects=True):
+        if mapping.get(obj.object).contains(geom):
+            return obj.object
     else:
-        logger.debug('No intersections for %s', osm_id)
+        # if the loop finished successfully return None
         return None
 
 
