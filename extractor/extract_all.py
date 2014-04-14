@@ -18,7 +18,6 @@ def main():
 
     lyr_discard = DiscardFeatureWriter.create_shp('discarded')
 
-    lyr_save0 = AdminLevelWriter.create_shp('admin_level_0')
     lyr_save1 = AdminLevelWriter.create_shp('admin_level_1')
     lyr_save2 = AdminLevelWriter.create_shp('admin_level_2')
     lyr_save3 = AdminLevelWriter.create_shp('admin_level_3')
@@ -79,9 +78,6 @@ def main():
         ]
 
         # process national level boundary
-        if admin_level == '0':
-            logger.debug('Writing admin_level=0, feature %s', osm_id)
-            lyr_save0.saveFeature(feature_data, geom)
         if admin_level == '1':
             logger.debug('Writing admin_level=1, feature %s', osm_id)
             lyr_save1.saveFeature(feature_data, geom)
@@ -113,19 +109,18 @@ def main():
             logger.debug('Writing admin_level=10, feature %s', osm_id)
             lyr_save10.saveFeature(feature_data, geom)
 
-    lyr_read.datasource.Destroy()
-    lyr_save0.datasource.Destroy()
-    lyr_save1.datasource.Destroy()
-    lyr_save2.datasource.Destroy()
-    lyr_save3.datasource.Destroy()
-    lyr_save4.datasource.Destroy()
-    lyr_save5.datasource.Destroy()
-    lyr_save6.datasource.Destroy()
-    lyr_save7.datasource.Destroy()
-    lyr_save8.datasource.Destroy()
-    lyr_save9.datasource.Destroy()
-    lyr_save10.datasource.Destroy()
-    lyr_discard.datasource.Destroy()
+    lyr_read.datasource = None
+    lyr_save1.datasource = None
+    lyr_save2.datasource = None
+    lyr_save3.datasource = None
+    lyr_save4.datasource = None
+    lyr_save5.datasource = None
+    lyr_save6.datasource = None
+    lyr_save7.datasource = None
+    lyr_save8.datasource = None
+    lyr_save9.datasource = None
+    lyr_save10.datasource = None
+    lyr_discard.datasource = None
 
 if __name__ == '__main__':
     main()

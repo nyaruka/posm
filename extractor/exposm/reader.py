@@ -65,7 +65,7 @@ class FeatureReader(object):
                         yield (lyr.GetName(), feat)
 
                     # force feature removal - required for INTERLEAVED_READING
-                    feat.Destroy()
+                    feat = None
                     # get the next feature
                     feat = lyr.GetNextFeature()
 

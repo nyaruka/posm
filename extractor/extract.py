@@ -69,8 +69,8 @@ def main():
 
             feature_id += 1
 
-    lyr_read.datasource.Destroy()
-    lyr_save.datasource.Destroy()
+    lyr_read.datasource = None
+    lyr_save.datasource = None
 
     # extract states
     admin_level_1 = {}
@@ -152,8 +152,8 @@ def main():
 
             feature_id += 1
 
-    lyr_read.datasource.Destroy()
-    lyr_save.datasource.Destroy()
+    lyr_read.datasource = None
+    lyr_save.datasource = None
 
     # extract counties
     lyr_save = AdminLevelWriter.create_shp('admin_level_2')
@@ -227,8 +227,8 @@ def main():
             ]
             lyr_save.saveFeature(feature_data, geom_raw)
 
-    lyr_read.datasource.Destroy()
-    lyr_save.datasource.Destroy()
+    lyr_read.datasource = None
+    lyr_save.datasource = None
 
 
 if __name__ == '__main__':
