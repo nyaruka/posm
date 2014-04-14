@@ -39,3 +39,7 @@ gdal.PushErrorHandler('CPLLoggingErrorHandler')
 gdal.SetConfigOption("CPL_LOG_ERRORS", 'ON')
 gdal.SetConfigOption('CPL_DEBUG', settings.get('gdal').get('debug'))
 gdal.SetConfigOption('CPL_LOG', settings.get('gdal').get('debug_file'))
+
+# postgresql driver specific settings
+
+gdal.SetConfigOption('PG_USE_COPY', 'YES')

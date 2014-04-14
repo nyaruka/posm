@@ -27,8 +27,25 @@ class FeatureWriter(object):
 
         shpWriter.driver = ogr.GetDriverByName('ESRI Shapefile')
 
-        shpWriter.createLayer()
+        shpWriter.createSHPLayer()
         return shpWriter
+
+    @classmethod
+    def create_postgis(cls, layer_name, *args, **kwargs):
+        """
+        Imports SacredSite data from a file (on disk)
+        """
+
+        postgisWriter = cls(*args, **kwargs)
+
+        postgisWriter.layer_name = layer_name
+
+        postgisWriter.database = settings.get('exposm').get('postgis')
+
+        postgisWriter.driver = ogr.GetDriverByName('PostgreSQL')
+
+        postgisWriter.createPOSTGISLayer()
+        return postgisWriter
 
     def __init__(self, autoremove=True, srs_epsg=4326):
 
@@ -38,7 +55,26 @@ class FeatureWriter(object):
         self.srs = osr.SpatialReference()
         self.srs.ImportFromEPSG(srs_epsg)
 
-    def createLayer(self):
+    def createPOSTGISLayer(self):
+        self.datasource = ogr.Open(self.database)
+
+        if self.datasource is None:
+            logger.critical('Datasource creation failed.')
+            sys.exit(1)
+
+        self.layer = self.datasource.CreateLayer(
+            self.layer_name, self.srs, ogr.wkbMultiPolygon,
+            options=['OVERWRITE=YES']
+        )
+
+        if self.layer is None:
+            logger.critical('Layer creation failed.')
+            sys.exit(1)
+
+        logger.info('Layer created: %s', self.layer_name)
+        self.createFields()
+
+    def createSHPLayer(self):
         self.datasource = self.driver.CreateDataSource(self.filename)
 
         if self.datasource is None:
@@ -79,6 +115,8 @@ class FeatureWriter(object):
         new_feat.SetGeometry(feature_geom)
         # add feature to the layer
         self.layer.CreateFeature(new_feat)
+
+        new_feat = None
 
 
 class AdminLevelWriter(FeatureWriter):
