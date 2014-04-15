@@ -18,7 +18,49 @@ from exposm.reader import AdminLevelReader
 from exposm.utils import osm_id_exists, check_bad_geom, intersect_geom
 
 
+def read_admin_check_files():
+    admin_level_0 = set(
+        open('admin_level_0.txt', 'r').read().splitlines()
+    )
+    admin_level_1 = set(
+        open('admin_level_1.txt', 'r').read().splitlines()
+    )
+    admin_level_2 = set(
+        open('admin_level_2.txt', 'r').read().splitlines()
+    )
+    return admin_level_0, admin_level_1, admin_level_2
+
+
+def write_admin_check_files(admin_0, admin_1, admin_2):
+    adm_0_check, adm_1_check, adm_2_check = read_admin_check_files()
+
+    adm_0_missing = adm_0_check - admin_0
+    adm_0_new = admin_0 - adm_0_check
+
+    adm_1_missing = adm_1_check - admin_1
+    adm_1_new = admin_1 - adm_1_check
+
+    adm_2_missing = adm_2_check - admin_2
+    adm_2_new = admin_2 - adm_2_check
+
+    def save_file(filename, data):
+        with open(filename, 'w') as new_file:
+            new_file.write('\n'.join(data))
+
+    save_file('admin_0_missing.txt', adm_0_missing)
+    save_file('admin_0_new.txt', adm_0_new)
+    save_file('admin_1_missing.txt', adm_1_missing)
+    save_file('admin_1_new.txt', adm_1_new)
+    save_file('admin_2_missing.txt', adm_2_missing)
+    save_file('admin_2_new.txt', adm_2_new)
+
+
 def main():
+
+    adm_0_temp = set()
+    adm_1_temp = set()
+    adm_2_temp = set()
+
     unusable_features = set()
     # setup index
     spat_index_0 = rtree.index.Index()
@@ -68,6 +110,9 @@ def main():
             logger.debug('Index %s, record %s', feature_id, osm_id)
 
             feature_id += 1
+
+            # add feature to temporary set
+            adm_0_temp.add(osm_id)
 
     lyr_read.datasource = None
     lyr_save.datasource = None
@@ -143,7 +188,6 @@ def main():
                 ('is_in', is_in)
             ]
             lyr_save.saveFeature(feature_data, geom_raw)
-
             admin_level_1.update({osm_id: prep(geom)})
             spat_index_1.insert(
                 feature_id, geom.envelope.bounds, obj=osm_id
@@ -151,6 +195,8 @@ def main():
             logger.debug('Index %s, record %s', feature_id, osm_id)
 
             feature_id += 1
+
+            adm_1_temp.add(osm_id)
 
     lyr_read.datasource = None
     lyr_save.datasource = None
@@ -226,9 +272,12 @@ def main():
                 ('is_in', is_in_state)
             ]
             lyr_save.saveFeature(feature_data, geom_raw)
+            adm_2_temp.add(osm_id)
 
     lyr_read.datasource = None
     lyr_save.datasource = None
+
+    write_admin_check_files(adm_0_temp, adm_1_temp, adm_2_temp)
 
 
 if __name__ == '__main__':

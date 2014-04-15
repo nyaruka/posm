@@ -45,3 +45,12 @@ out/*
 # yaml config files
 settings.yaml
 admin_mapping.yaml
+admin_level_0.txt
+admin_level_1.txt
+admin_level_2.txt
+admin_0_missing.txt
+admin_0_new.txt
+admin_1_missing.txt
+admin_1_new.txt
+admin_2_missing.txt
+admin_2_new.txt
