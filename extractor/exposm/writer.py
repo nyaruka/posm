@@ -134,8 +134,8 @@ class AdminLevelWriter(FeatureWriter):
         name_en_def = ogr.FieldDefn('name_en', ogr.OFTString)
         name_en_def.SetWidth(254)
 
-        adminlevel_def = ogr.FieldDefn('adminlevel', ogr.OFTString)
-        adminlevel_def.SetWidth(254)
+        adminlevel_def = ogr.FieldDefn('adminlevel', ogr.OFTInteger)
+        # adminlevel_def.SetWidth(254)
 
         is_in_def = ogr.FieldDefn('is_in', ogr.OFTString)
         is_in_def.SetWidth(254)
@@ -155,8 +155,8 @@ class DiscardFeatureWriter(FeatureWriter):
         name_def = ogr.FieldDefn('name', ogr.OFTString)
         name_def.SetWidth(254)
 
-        adminlevel_def = ogr.FieldDefn('adminlevel', ogr.OFTString)
-        adminlevel_def.SetWidth(254)
+        adminlevel_def = ogr.FieldDefn('adminlevel', ogr.OFTInteger)
+        # adminlevel_def.SetWidth(254)
 
         reason_def = ogr.FieldDefn('reason', ogr.OFTString)
         reason_def.SetWidth(254)

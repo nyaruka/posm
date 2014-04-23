@@ -67,7 +67,7 @@ def main():
     # extract countries
     admin_level_0 = {}
 
-    lyr_save = AdminLevelWriter.create_shp('admin_level_0')
+    lyr_save = AdminLevelWriter.create_postgis('admin_level_0')
     lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 
     feature_id = 0
@@ -124,7 +124,7 @@ def main():
 
     feature_id = 0
 
-    lyr_save = AdminLevelWriter.create_shp('admin_level_1')
+    lyr_save = AdminLevelWriter.create_postgis('admin_level_1')
     lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 
     for layer, feature in lyr_read.readData():
@@ -202,7 +202,7 @@ def main():
     lyr_save.datasource = None
 
     # extract counties
-    lyr_save = AdminLevelWriter.create_shp('admin_level_2')
+    lyr_save = AdminLevelWriter.create_postgis('admin_level_2')
     lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 
     for layer, feature in lyr_read.readData():
