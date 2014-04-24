@@ -14,8 +14,14 @@ PERFORM AddTopoGeometryColumn('admin_topo', 'public', 'all_geom', 'topo', 'MULTI
 select count(*) INTO t_count FROM all_geom;
 
 FOR rec in SELECT * FROM all_geom order by osm_id ASC LOOP
-	UPDATE all_geom SET topo = toTopoGeom(wkb_geometry, 'admin_topo', (SELECT layer_id from topology.layer where feature_column = 'topo'))
+	BEGIN
+		UPDATE all_geom SET topo = toTopoGeom(wkb_geometry, 'admin_topo', (SELECT layer_id from topology.layer where feature_column = 'topo'))
 		WHERE osm_id = rec.osm_id;
+	EXCEPTION
+		WHEN OTHERS THEN
+			RAISE WARNING 'Topology generation failed, removing feature % - %', rec.osm_id, SQLERRM;
+			DELETE FROM all_geom WHERE osm_id = rec.osm_id;
+	END;
 	RAISE NOTICE 'Done %/% - %', t_current, t_count, rec.osm_id;
 	t_current:=t_current + 1;
 END LOOP;
