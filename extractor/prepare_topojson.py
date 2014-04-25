@@ -6,6 +6,8 @@ import logging.config
 import os
 import os.path
 
+import subprocess
+
 from osgeo import ogr, osr
 
 from exposm.settings import settings
@@ -62,6 +64,21 @@ def write_feature(datasource, feature_data, feature_geom):
 
     new_feat = None
 
+
+def convert_to_topojson(path):
+    # cur_path = os.getcwd()
+    # os.chdir(path)
+    geojson_path = os.path.join(path, 'geometry.geojson')
+    topojson_path = os.path.join(path, 'geometry.topojson')
+    logger.info('Converting %s to %s', geojson_path, topojson_path)
+    result = subprocess.call(
+        ['topojson', '-p', '-o', topojson_path, geojson_path],
+        stdout=open(os.devnull, 'wb'),  # make it silent
+        stderr=open(os.devnull, 'wb')
+    )
+
+    if result:
+        logger.error('Cannot convert to topojson...')
 
 feature0 = simple_ad0.GetNextFeature()
 while feature0:
@@ -124,6 +141,7 @@ while feature0:
         )
         # write feature to the state.geojson
         geojson_datasource_state = None
+        convert_to_topojson(ad1_dir)
         # read next ad1 feature
         feature1 = simple_ad1.GetNextFeature()
 
@@ -134,5 +152,6 @@ while feature0:
         feature0.GetGeomFieldRef(0)
     )
     geojson_datasource_country = None
+    convert_to_topojson(ad0_dir)
     # read next ad0 feature
     feature0 = simple_ad0.GetNextFeature()
