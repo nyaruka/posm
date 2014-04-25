@@ -16,7 +16,7 @@ class FeatureWriter(object):
     @classmethod
     def create_shp(cls, filename, *args, **kwargs):
         """
-        Imports SacredSite data from a file (on disk)
+        Stores data to a SHP file (on disk)
         """
         shpWriter = cls(*args, **kwargs)
 
@@ -33,7 +33,7 @@ class FeatureWriter(object):
     @classmethod
     def create_postgis(cls, layer_name, *args, **kwargs):
         """
-        Imports SacredSite data from a file (on disk)
+        Stores data to a POSTGIS database
         """
 
         postgisWriter = cls(*args, **kwargs)
