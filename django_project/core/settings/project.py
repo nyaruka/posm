@@ -19,6 +19,7 @@ DATABASES = {
 
 # Project apps
 INSTALLED_APPS += (
+    'demo',
 )
 
 # Set debug to false for production
