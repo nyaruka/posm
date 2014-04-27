@@ -19,10 +19,13 @@ class AdminLevel0(models.Model):
     wkb_geometry = models.MultiPolygonField(srid=4326)
     natural_wkb_geometry = models.MultiPolygonField(srid=4326)
 
+    # reverse generic relation
+    indicators = generic.GenericRelation(Indicator)
+
     objects = models.GeoManager()
 
     class Meta:
-        managed = False
+        managed = False  # don't manage database view
         db_table = 'simple_admin_0_view'
 
 
@@ -33,10 +36,13 @@ class AdminLevel1(models.Model):
     wkb_geometry = models.MultiPolygonField(srid=4326)
     natural_wkb_geometry = models.MultiPolygonField(srid=4326)
 
+    # reverse generic relation
+    indicators = generic.GenericRelation(Indicator)
+
     objects = models.GeoManager()
 
     class Meta:
-        managed = False
+        managed = False  # don't manage database view
         db_table = 'simple_admin_1_view'
 
 
@@ -48,8 +54,11 @@ class AdminLevel2(models.Model):
     wkb_geometry = models.MultiPolygonField(srid=4326)
     natural_wkb_geometry = models.MultiPolygonField(srid=4326)
 
+    # reverse generic relation
+    indicators = generic.GenericRelation(Indicator)
+
     objects = models.GeoManager()
 
     class Meta:
-        managed = False
+        managed = False  # don't manage database view
         db_table = 'simple_admin_2_view'
