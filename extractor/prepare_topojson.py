@@ -44,7 +44,10 @@ def create_GEOJSON(path):
     osm_id_def = ogr.FieldDefn('osm_id', ogr.OFTString)
     osm_id_def.SetWidth(254)
 
+    boundary_def = ogr.FieldDefn('is_boundary', ogr.OFTInteger)
+
     layer.CreateField(osm_id_def)
+    layer.CreateField(boundary_def)
 
     return GEOJSON_datasource
 
@@ -128,9 +131,10 @@ while feature0:
             # read next ad2 feature
             feature2 = simple_ad2.GetNextFeature()
 
+        # write feature as a boundary to the state.geojson
         write_feature(
             geojson_datasource_state,
-            [('osm_id', ad1_osm_id)],
+            [('osm_id', ad1_osm_id), ('is_boundary', 1)],
             feature1.GetGeomFieldRef(0)
         )
         # write feature to the country.geojson
@@ -145,10 +149,10 @@ while feature0:
         # read next ad1 feature
         feature1 = simple_ad1.GetNextFeature()
 
-    # write feature to the country.geojson
+    # write feature as a boundary to the country.geojson
     write_feature(
         geojson_datasource_country,
-        [('osm_id', ad0_osm_id)],
+        [('osm_id', ad0_osm_id), ('is_boundary', 1)],
         feature0.GetGeomFieldRef(0)
     )
     geojson_datasource_country = None
