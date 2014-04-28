@@ -9,5 +9,6 @@ urlpatterns = patterns(
 
     # Enable the admin:
     url(r'^admin/', include(admin.site.urls)),
+    url(r'', include('demo.urls')),
 
 )
