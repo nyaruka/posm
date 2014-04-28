@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 
-from .views import MenuList, SubMenuList
+from .views import MenuList, SubMenuList, IndicatorList
 
 urlpatterns = patterns(
     '',
@@ -13,5 +13,9 @@ urlpatterns = patterns(
     url(
         r'^menu/(?P<osm_id>[0-9]+)/$',
         SubMenuList.as_view(actions={'get': 'list'}), name='sub_menu'
+    ),
+    url(
+        r'^data/(?P<osm_id>[0-9]+)/$',
+        IndicatorList.as_view(actions={'get': 'list'}), name='data_list'
     )
 )
