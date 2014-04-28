@@ -4,6 +4,8 @@ logger = logging.getLogger(__name__)
 from rest_framework import viewsets
 from rest_framework.response import Response
 
+from django.views.generic import TemplateView
+
 from .models import AdminLevel0, AdminLevel1, Indicator
 from .serializers import MenuSerializer, SubMenuSerializer, IndicatorSerializer
 
@@ -43,3 +45,7 @@ class IndicatorList(viewsets.ViewSet):
         )
 
         return Response(serializer.data)
+
+
+class HomePage(TemplateView):
+    template_name = "homepage.html"

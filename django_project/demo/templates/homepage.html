@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title%} Demo page {% endblock title%}
+
+{% block content %}
+ <div class="navbar navbar-inverse navbar-fixed-top">
+	<div class="navbar-inner">
+		<div class="container">
+		  <a class="brand" href="#">Prototype client</a>
+		  <div class="nav-collapse collapse">
+		    <ul class="nav">
+		      <li class="active"><a href="#">Home</a></li>
+		    </ul>
+		  </div><!--/.nav-collapse -->
+		</div>
+	</div>
+</div>
+<div class="container">
+	<div class="row">
+	    <div class="span10">
+	        <div id="map" class="map"></div>
+	    </div>
+	    <div class="span2">
+	    </div>
+	</div>
+</div>
+{% endblock content %}
+
+{% block content_js %}
+<script type="text/javascript">
+	$( document ).ready(function() {
+      view =  new ol.View2D({
+          center: [0, 0],
+          zoom: 4
+        });
+      map = new ol.Map({
+        target: 'map',
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.MapQuest({layer: 'sat'})
+          })
+        ],
+        view: view
+      });
+    });
+</script>
+{% endblock content_js %}

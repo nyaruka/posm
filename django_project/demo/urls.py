@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 
-from .views import MenuList, SubMenuList, IndicatorList
+from .views import MenuList, SubMenuList, IndicatorList, HomePage
 
 urlpatterns = patterns(
     '',
@@ -17,5 +17,8 @@ urlpatterns = patterns(
     url(
         r'^data/(?P<osm_id>[0-9]+)/$',
         IndicatorList.as_view(actions={'get': 'list'}), name='data_list'
+    ),
+    url(
+        r'^$', HomePage.as_view(), name='homepage'
     )
 )
