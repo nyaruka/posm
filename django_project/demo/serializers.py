@@ -22,5 +22,6 @@ class SubMenuSerializer(serializers.Serializer):
 
 class IndicatorSerializer(serializers.Serializer):
     osm_id = serializers.CharField(max_length=15, source='object_id')
+    name = serializers.CharField(max_length=50, source='name')
     factor_a = serializers.FloatField()
     factor_b = serializers.FloatField()

@@ -49,6 +49,9 @@ class Indicator(models.Model):
     # define custom queryset
     objects = PassThroughManager.for_queryset_class(IndicatorQuerySet)()
 
+    def name(self):
+        return self.content_object.name or 'Unknown'
+
 
 class AdminLevel0(models.Model):
     osm_id = models.CharField(max_length=15, primary_key=True)

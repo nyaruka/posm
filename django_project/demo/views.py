@@ -38,8 +38,11 @@ class SubMenuList(viewsets.ViewSet):
 class IndicatorList(viewsets.ViewSet):
 
     def list(self, request, *args, **kwargs):
-        serializer = IndicatorSerializer(
-            Indicator.objects.for_osm_id(self.kwargs.get('osm_id')),
+        serializer = IndicatorSerializer((
+            Indicator.objects
+            .for_osm_id(self.kwargs.get('osm_id'))
+            .prefetch_related('content_object')
+        ),
             many=True,
             context={'request': request}
         )
