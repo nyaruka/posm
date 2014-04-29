@@ -101,23 +101,21 @@
 			map.addLayer(level2Layer);
 			lvl2Control.bindTo('checked', level2Layer, 'visible');
 			view.fitExtent(vectorSourceLvl2.getExtent(), map.getSize());
-			loadData(vectorSourceLvl2);
+			loadData(vectorSourceLvl2, id);
 		});
-		currentOsmId = id;
 	}
 
-	function loadData(source) {
-		if (currentOsmId)
-			$.getJSON( '/data/' + currentOsmId + '/', function( data ) {
-				var features = source.getFeatures();
-				_.each(features, function(val) {
-					var feat = val.getProperties();
-					var factors = _.find(data, function(fdata) {
-						return fdata.osm_id == feat.osm_id;
-					});
-					val.setValues(factors);
+	function loadData(source, currentOsmId) {
+		$.getJSON( '/data/' + currentOsmId + '/', function( data ) {
+			var features = source.getFeatures();
+			_.each(features, function(val) {
+				var feat = val.getProperties();
+				var factors = _.find(data, function(fdata) {
+					return fdata.osm_id == feat.osm_id;
 				});
+				val.setValues(factors);
 			});
+		});
 	}
 
 	var styles = {
@@ -222,7 +220,6 @@
 
 		factor_data = {};
 		factor_type = 'factor_a';
-		currentOsmId = null;
 
 		lvl1Control = new ol.dom.Input(document.getElementById('level1'));
 		lvl2Control = new ol.dom.Input(document.getElementById('level2'));
