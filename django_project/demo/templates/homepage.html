@@ -21,6 +21,20 @@
 	        <div id="map" class="map"></div>
 	    </div>
 	    <div class="span2">
+	    <div class="checkbox">
+		    <label>
+		      <input type="checkbox" id="level1"> Level 1
+		    </label>
+		 </div>
+		 <div class="checkbox">
+		    <label>
+		      <input type="checkbox" id="level2"> Level 2
+		    </label>
+		 </div>
+	    <div class="btn-group">
+	    	<button class="btn btn-success" id="btnFactorA">Factor A</button>
+	    	<button class="btn" id="btnFactorB">Factor B</button>
+	    	</div>
 	    <button class="btn hide" id="btnBack">Back</button>
 	    	<div id="menu_lvl1"></div>
 	    	<div id="menu_lvl2"></div>
@@ -41,11 +55,11 @@
 	}
 
 	function loadLevelTwo(id) {
-		loadLevel1Geometry('/static/topojson/'+id+'/');
+		loadLevel1Geometry(id);
 		$.getJSON( "/menu/" + id + "/", function( data ) {
 			$('#menu_lvl2').html('');
 			$.each(data, function(index, val) {
-				var html = '<a href="#" onclick="loadLevel2Geometry(\'/static/topojson/' + id + '/' + val.osm_id + '/\')">' + val.name + '</a><br />';
+				var html = '<a href="#" onclick="loadLevel2Geometry(' + val.osm_id + ',' + id + ')">' + val.name + '</a><br />';
 				$('#menu_lvl2').append(html);
 			});
 			$('#menu_lvl1').hide();
@@ -54,57 +68,118 @@
 		});
 	}
 
-	function loadLevel1Geometry(dir) {
+	function loadLevel1Geometry(id) {
+		dir = '/static/topojson/'+id+'/';
 		if (typeof level1Layer != 'undefined')
         	map.removeLayer(level1Layer);
+        if (typeof level2Layer != 'undefined')
+        	map.removeLayer(level2Layer);
+
 		$.getJSON( dir + 'geometry.geojson', function( data ) {
-			var vectorSource = new ol.source.GeoJSON({object: data, projection: 'EPSG:3857'});
+			vectorSourceLvl1 = new ol.source.GeoJSON({object: data, projection: 'EPSG:3857'});
 			level1Layer = new ol.layer.Vector({
-			  source: vectorSource,
+			  source: vectorSourceLvl1,
 			  style: styleFunction
 			});
 			map.addLayer(level1Layer);
-			view.fitExtent(vectorSource.getExtent(), map.getSize());
+			lvl1Control.bindTo('checked', level1Layer, 'visible');
+			view.fitExtent(vectorSourceLvl1.getExtent(), map.getSize());
+			loadData(vectorSourceLvl1);
 		});
+		currentOsmId = id;
 	}
 
-	function loadLevel2Geometry(dir) {
+	function loadLevel2Geometry(id, parent) {
+		var dir = '/static/topojson/' + parent + '/' + id + '/';
 		if (typeof level2Layer != 'undefined')
         	map.removeLayer(level2Layer);
 		$.getJSON( dir + 'geometry.geojson', function( data ) {
-			var vectorSource = new ol.source.GeoJSON({object: data, projection: 'EPSG:3857'});
+			vectorSourceLvl2 = new ol.source.GeoJSON({object: data, projection: 'EPSG:3857'});
 			level2Layer = new ol.layer.Vector({
-			  source: vectorSource,
+			  source: vectorSourceLvl2,
 			  style: styleFunction
 			});
 			map.addLayer(level2Layer);
-			view.fitExtent(vectorSource.getExtent(), map.getSize());
+			lvl2Control.bindTo('checked', level2Layer, 'visible');
+			view.fitExtent(vectorSourceLvl2.getExtent(), map.getSize());
+			loadData(vectorSourceLvl2);
 		});
+		currentOsmId = id;
+	}
+
+	function loadData(source) {
+		if (currentOsmId)
+			$.getJSON( '/data/' + currentOsmId + '/', function( data ) {
+				var features = source.getFeatures();
+				_.each(features, function(val) {
+					var feat = val.getProperties();
+					var factors = _.find(data, function(fdata) {
+						return fdata.osm_id == feat.osm_id;
+					});
+					val.setValues(factors);
+				});
+			});
 	}
 
 	var styles = {
-      'Polygon': [new ol.style.Style({
+      'default': [new ol.style.Style({
         fill: new ol.style.Fill({
-          color: 'rgba(255, 255, 255, 0.6)'
+          color: 'rgba(255, 255, 255, 0.9)'
         }),
         stroke: new ol.style.Stroke({
-          color: '#000',
-          width: 2
+          color: '#fff',
+          width: 1
         })
       })],
-      'MultiPolygon': [new ol.style.Style({
+      'rank1': [new ol.style.Style({
         fill: new ol.style.Fill({
-          color: 'rgba(255, 255, 255, 0.6)'
+          color: 'rgba(219, 55, 0, 0.9)'
         }),
         stroke: new ol.style.Stroke({
+          color: '#fff',
+          width: 1
+        })
+      })],
+      'rank2': [new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: 'rgba(219, 164, 0, 0.9)'
+        }),
+        stroke: new ol.style.Stroke({
+          color: '#fff',
+          width: 1
+        })
+      })],
+      'rank3': [new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: 'rgba(164, 219, 0, 0.9)'
+        }),
+        stroke: new ol.style.Stroke({
+          color: '#fff',
+          width: 1
+        })
+      })],
+      'boundary': [new ol.style.Style({
+        stroke: new ol.style.Stroke({
           color: '#000',
-          width: 2
+          width: 3
         })
       })]
     };
 
     var styleFunction = function(feature, resolution) {
-      return styles[feature.getGeometry().getType()];
+    	var feat = feature.getProperties();
+    	if (feat.is_boundary == 1)
+    		return styles['boundary'];
+    	if (typeof feat[factor_type] != 'undefined') {
+    		if (feat[factor_type] < 0.34)
+    			return styles['rank1'];
+    		if (feat[factor_type] > 0.66)
+    			return styles['rank3'];
+    		if (feat[factor_type] > 0.33 && feat[factor_type] < 0.66)
+    			return styles['rank2'];
+    	}
+
+      	return styles['default'];
     };
 
 	$( document ).ready(function() {
@@ -113,19 +188,46 @@
 			$('#menu_lvl2').hide();
 			$('#btnBack').hide();
 		});
+		$('#btnFactorA').on('click', function() {
+			factor_type = 'factor_a';
+			$(this).addClass('btn-success');
+			$('#btnFactorB').removeClass('btn-success');
+			if (typeof level1Layer != 'undefined')
+        		level1Layer.setStyle(styleFunction);
+        	if (typeof level2Layer != 'undefined')
+        		level2Layer.setStyle(styleFunction);
+		});
+		$('#btnFactorB').on('click', function() {
+			factor_type = 'factor_b';
+			$(this).addClass('btn-success');
+			$('#btnFactorA').removeClass('btn-success');
+			if (typeof level1Layer != 'undefined')
+        		level1Layer.setStyle(styleFunction);
+        	if (typeof level2Layer != 'undefined')
+        		level2Layer.setStyle(styleFunction);
+		});
+
 		view =  new ol.View2D({
-		  center: [0, 0],
-		  zoom: 4
+			center: [0, 0],
+			zoom: 4
 		});
 		map = new ol.Map({
-		target: 'map',
-		layers: [
-		  new ol.layer.Tile({
-		    source: new ol.source.MapQuest({layer: 'sat'})
-		  })
-		],
-		view: view
+			target: 'map',
+			layers: [
+				new ol.layer.Tile({
+					source: new ol.source.MapQuest({layer: 'sat'})
+				})
+			],
+			view: view
 		});
+
+		factor_data = {};
+		factor_type = 'factor_a';
+		currentOsmId = null;
+
+		lvl1Control = new ol.dom.Input(document.getElementById('level1'));
+		lvl2Control = new ol.dom.Input(document.getElementById('level2'));
+
 		initMenu();
     });
 </script>
