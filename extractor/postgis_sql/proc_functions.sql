@@ -189,7 +189,7 @@ BEGIN
 RAISE NOTICE 'Creating simple_admin_2...';
 -- simplify county
 BEGIN
-	drop table simple_admin_2;
+	drop table simple_admin_2 CASCADE;
 	EXCEPTION
 		WHEN SQLSTATE '42P01' THEN 
 		-- do nothing
@@ -203,7 +203,7 @@ select all_geom.osm_id, ST_simplify(topo, i_tolerance) as wkb_geometry from all_
 -- simplify state
 RAISE NOTICE 'Creating simple_admin_1...';
 BEGIN
-	drop table simple_admin_1;
+	drop table simple_admin_1 CASCADE;
 	EXCEPTION
 		WHEN SQLSTATE '42P01' THEN 
 		-- do nothing
@@ -223,7 +223,7 @@ from all_geom inner join admin_level_1 on all_geom.is_in_state =admin_level_1.os
 -- simplify country
 RAISE NOTICE 'Creating simple_admin_0...';
 BEGIN
-	drop table simple_admin_0;
+	drop table simple_admin_0 CASCADE;
 	EXCEPTION
 		WHEN SQLSTATE '42P01' THEN 
 		-- do nothing
