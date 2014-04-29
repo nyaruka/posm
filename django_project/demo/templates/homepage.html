@@ -75,8 +75,8 @@
         if (typeof level2Layer != 'undefined')
         	map.removeLayer(level2Layer);
 
-		$.getJSON( dir + 'geometry.geojson', function( data ) {
-			vectorSourceLvl1 = new ol.source.GeoJSON({object: data, projection: 'EPSG:3857'});
+		$.getJSON( dir + 'geometry.topojson', function( data ) {
+			vectorSourceLvl1 = new ol.source.TopoJSON({object: data, projection: 'EPSG:3857'});
 			level1Layer = new ol.layer.Vector({
 			  source: vectorSourceLvl1,
 			  style: styleFunction
@@ -84,17 +84,16 @@
 			map.addLayer(level1Layer);
 			lvl1Control.bindTo('checked', level1Layer, 'visible');
 			view.fitExtent(vectorSourceLvl1.getExtent(), map.getSize());
-			loadData(vectorSourceLvl1);
+			loadData(vectorSourceLvl1, id);
 		});
-		currentOsmId = id;
 	}
 
 	function loadLevel2Geometry(id, parent) {
 		var dir = '/static/topojson/' + parent + '/' + id + '/';
 		if (typeof level2Layer != 'undefined')
         	map.removeLayer(level2Layer);
-		$.getJSON( dir + 'geometry.geojson', function( data ) {
-			vectorSourceLvl2 = new ol.source.GeoJSON({object: data, projection: 'EPSG:3857'});
+		$.getJSON( dir + 'geometry.topojson', function( data ) {
+			vectorSourceLvl2 = new ol.source.TopoJSON({object: data, projection: 'EPSG:3857'});
 			level2Layer = new ol.layer.Vector({
 			  source: vectorSourceLvl2,
 			  style: styleFunction
@@ -209,7 +208,7 @@
 
 		view =  new ol.View2D({
 			center: [0, 0],
-			zoom: 4
+			zoom: 2
 		});
 		map = new ol.Map({
 			target: 'map',
