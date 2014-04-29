@@ -21,6 +21,9 @@
 	        <div id="map" class="map"></div>
 	    </div>
 	    <div class="span2">
+	    <button class="btn hide" id="btnBack">Back</button>
+	    	<div id="menu_lvl1"></div>
+	    	<div id="menu_lvl2"></div>
 	    </div>
 	</div>
 </div>
@@ -28,20 +31,102 @@
 
 {% block content_js %}
 <script type="text/javascript">
+	function initMenu() {
+		$.getJSON( "/menu/", function( data ) {
+			$.each(data, function(index, val) {
+				var html = '<a href="#" onclick="loadLevelTwo(' + val.osm_id + ')">' + val.name + '</a><br />';
+				$('#menu_lvl1').append(html);
+			});
+		});
+	}
+
+	function loadLevelTwo(id) {
+		loadLevel1Geometry('/static/topojson/'+id+'/');
+		$.getJSON( "/menu/" + id + "/", function( data ) {
+			$('#menu_lvl2').html('');
+			$.each(data, function(index, val) {
+				var html = '<a href="#" onclick="loadLevel2Geometry(\'/static/topojson/' + id + '/' + val.osm_id + '/\')">' + val.name + '</a><br />';
+				$('#menu_lvl2').append(html);
+			});
+			$('#menu_lvl1').hide();
+			$('#menu_lvl2').show();
+			$('#btnBack').show();
+		});
+	}
+
+	function loadLevel1Geometry(dir) {
+		if (typeof level1Layer != 'undefined')
+        	map.removeLayer(level1Layer);
+		$.getJSON( dir + 'geometry.geojson', function( data ) {
+			var vectorSource = new ol.source.GeoJSON({object: data, projection: 'EPSG:3857'});
+			level1Layer = new ol.layer.Vector({
+			  source: vectorSource,
+			  style: styleFunction
+			});
+			map.addLayer(level1Layer);
+			view.fitExtent(vectorSource.getExtent(), map.getSize());
+		});
+	}
+
+	function loadLevel2Geometry(dir) {
+		if (typeof level2Layer != 'undefined')
+        	map.removeLayer(level2Layer);
+		$.getJSON( dir + 'geometry.geojson', function( data ) {
+			var vectorSource = new ol.source.GeoJSON({object: data, projection: 'EPSG:3857'});
+			level2Layer = new ol.layer.Vector({
+			  source: vectorSource,
+			  style: styleFunction
+			});
+			map.addLayer(level2Layer);
+			view.fitExtent(vectorSource.getExtent(), map.getSize());
+		});
+	}
+
+	var styles = {
+      'Polygon': [new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: 'rgba(255, 255, 255, 0.6)'
+        }),
+        stroke: new ol.style.Stroke({
+          color: '#000',
+          width: 2
+        })
+      })],
+      'MultiPolygon': [new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: 'rgba(255, 255, 255, 0.6)'
+        }),
+        stroke: new ol.style.Stroke({
+          color: '#000',
+          width: 2
+        })
+      })]
+    };
+
+    var styleFunction = function(feature, resolution) {
+      return styles[feature.getGeometry().getType()];
+    };
+
 	$( document ).ready(function() {
-      view =  new ol.View2D({
-          center: [0, 0],
-          zoom: 4
-        });
-      map = new ol.Map({
-        target: 'map',
-        layers: [
-          new ol.layer.Tile({
-            source: new ol.source.MapQuest({layer: 'sat'})
-          })
-        ],
-        view: view
-      });
+		$('#btnBack').on('click', function() {
+			$('#menu_lvl1').show();
+			$('#menu_lvl2').hide();
+			$('#btnBack').hide();
+		});
+		view =  new ol.View2D({
+		  center: [0, 0],
+		  zoom: 4
+		});
+		map = new ol.Map({
+		target: 'map',
+		layers: [
+		  new ol.layer.Tile({
+		    source: new ol.source.MapQuest({layer: 'sat'})
+		  })
+		],
+		view: view
+		});
+		initMenu();
     });
 </script>
 {% endblock content_js %}
