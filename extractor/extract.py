@@ -177,6 +177,11 @@ def main():
             # if we can't determine relationship, skip this feature
             continue
 
+        if not(is_in):
+            # if we can't determine relationship, skip this feature
+            logger.info('Missing country information ... %s', osm_id)
+            continue
+
         # check current feature admin level
         if admin_level == str(search_admin_level):
 
@@ -260,6 +265,7 @@ def main():
 
         if not(is_in_state):
             # if we can't determine relationship, skip this feature
+            logger.info('Missing state information ... %s', osm_id)
             continue
 
         # check current feature admin level
