@@ -255,5 +255,6 @@ for osm_id in osm_ids:
     else:
         logger.warning('Feature %s is missing ...', osm_id)
 
-logger.info('Creating archive in the current directory...')
-create_archive()
+if osm_ids:
+    logger.info('Creating archive in the current directory...')
+    create_archive()
