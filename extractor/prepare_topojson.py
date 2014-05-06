@@ -88,7 +88,7 @@ while feature0:
     ad0_osm_id = feature0.GetField('osm_id')
 
     ad0_dir = os.path.join(
-        settings.get('exposm').get('topojson_output_directory'),
+        settings.get('exposm').get('geojson_output_directory'),
         ad0_osm_id
     )
     logger.info('Creating ad0 directory: %s', ad0_dir)
@@ -104,7 +104,7 @@ while feature0:
     while feature1:
         ad1_osm_id = feature1.GetField('osm_id')
         ad1_dir = os.path.join(
-            settings.get('exposm').get('topojson_output_directory'),
+            settings.get('exposm').get('geojson_output_directory'),
             ad0_osm_id, ad1_osm_id
         )
 
