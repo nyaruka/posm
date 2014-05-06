@@ -8,6 +8,7 @@ import os.path
 import argparse
 
 import shutil
+import subprocess
 
 from osgeo import ogr, osr
 
@@ -70,6 +71,11 @@ def create_GEOJSON(path, filename):
 
     layer.CreateField(osm_id_def)
 
+    name_def = ogr.FieldDefn('name', ogr.OFTString)
+    name_def.SetWidth(254)
+
+    layer.CreateField(name_def)
+
     is_in_c_def = ogr.FieldDefn('is_in_country', ogr.OFTString)
     is_in_c_def.SetWidth(254)
 
@@ -101,15 +107,24 @@ def write_feature(datasource, feature_data, feature_geom):
 
 def create_archive():
     """
-    Use shutil make_archive to create a zip archive of created geojson files
-    """
-    shutil.make_archive(
-        base_name='exported_geojson',
-        format='zip',
-        root_dir=settings.get('exposm').get('geojson_output_directory'),
-        base_dir='.'
-    )
+    Use subprocess call to 'zip' to create a zip archive of created geojson
+    files
 
+    ..Note: built-in module zipfile was creating correct zip files with
+    corrupted files
+    """
+    if os.path.exists('exported_geojson.zip'):
+        os.unlink('exported_geojson.zip')
+
+    result = subprocess.call([
+        'zip', '-j', '-r', 'exported_geojson.zip',
+        settings.get('exposm').get('geojson_output_directory')
+    ],
+        stdout=open(os.devnull, 'wb'),  # make it silent
+        stderr=open(os.devnull, 'wb')
+    )
+    if result:
+        logger.error('Problem creating ZIP archive...')
 
 # use provided arguments
 if cli_args.rm:
@@ -136,12 +151,13 @@ for osm_id in osm_ids:
     if feature0:
         logger.info('Found feature %s ...', osm_id)
         ad0_osm_id = feature0.GetField('osm_id')
+        ad0_name = feature0.GetField('name')
         ad0_is_in_c = None
         ad0_is_in_s = None
 
         ad0_attrs = [
             ('osm_id', ad0_osm_id), ('is_in_country', ad0_is_in_c),
-            ('is_in_state', ad0_is_in_s)
+            ('is_in_state', ad0_is_in_s), ('name', ad0_name)
         ]
 
         filename = '{}admin{}{}.json'.format(ad0_osm_id, 0, '')
@@ -190,11 +206,12 @@ for osm_id in osm_ids:
         while feature1:
             ad1_osm_id = feature1.GetField('osm_id')
             ad1_is_in_c = feature1.GetField('is_in_country')
+            ad1_name = feature1.GetField('name')
             ad1_is_in_s = None
 
             ad1_attrs = [
                 ('osm_id', ad1_osm_id), ('is_in_country', ad1_is_in_c),
-                ('is_in_state', ad1_is_in_s)
+                ('is_in_state', ad1_is_in_s), ('name', ad1_name)
             ]
 
             write_feature(
@@ -230,12 +247,13 @@ for osm_id in osm_ids:
 
         while feature2:
             ad2_osm_id = feature2.GetField('osm_id')
+            ad2_name = feature2.GetField('name')
             ad2_is_in_c = feature2.GetField('is_in_country')
             ad2_is_in_s = feature2.GetField('is_in_state')
 
             ad2_attrs = [
                 ('osm_id', ad2_osm_id), ('is_in_country', ad2_is_in_c),
-                ('is_in_state', ad2_is_in_s)
+                ('is_in_state', ad2_is_in_s), ('name', ad2_name)
             ]
 
             write_feature(
