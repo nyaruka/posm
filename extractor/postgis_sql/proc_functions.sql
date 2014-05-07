@@ -241,6 +241,166 @@ select all_geom.is_in_country
 from all_geom inner join admin_level_0 on all_geom.is_in_country = admin_level_0.osm_id;
 
 
+create views of every country (in admin_level_0) and every other admin_level in the country
+CREATE VIEW simple_admin_0_view AS
+
+SELECT ad0.osm_id, ad0.name, sa0.wkb_geometry, ad0.wkb_geometry as natural_wkb_geometry
+FROM admin_level_0 ad0 INNER JOIN simple_admin_0 sa0 ON ad0.osm_id = sa0.osm_id;
+
+
+CREATE VIEW simple_admin_1_view AS
+
+SELECT ad1.osm_id, ad1.name, sa1.wkb_geometry, ad0.osm_id as is_in_country, ad1.wkb_geometry as natural_wkb_geometry
+FROM admin_level_0 ad0 INNER JOIN admin_level_1 ad1 ON ad0.osm_id = ad1.is_in
+    INNER JOIN simple_admin_1 sa1 ON ad1.osm_id = sa1.osm_id;
+
+CREATE VIEW simple_admin_2_view AS
+
+SELECT ad2.osm_id, ad2.name, sa2.wkb_geometry, ad0.osm_id as is_in_country, ad1.osm_id as is_in_state, ad2.wkb_geometry as natural_wkb_geometry
+FROM admin_level_0 ad0 INNER JOIN admin_level_1 ad1 ON ad0.osm_id = ad1.is_in
+    INNER JOIN admin_level_2 ad2 ON ad1.osm_id = ad2.is_in
+    INNER JOIN simple_admin_2 sa2 ON ad2.osm_id = sa2.osm_id;
+
 END;
 $$
 LANGUAGE 'plpgsql' VOLATILE STRICT;
+
+
+
+
+create or replace function simplify_dissolve(i_tolerance IN float DEFAULT 0.1, i_osmid_list IN VARCHAR[] DEFAULT '{}') RETURNS VOID AS
+$func$
+DECLARE
+q1 VARCHAR;
+q2 VARCHAR;
+condition VARCHAr;
+BEGIN
+
+RAISE NOTICE 'Simplifying base topology....';
+BEGIN
+	drop table simple_admin_all CASCADE;
+	EXCEPTION
+		WHEN SQLSTATE '42P01' THEN 
+		-- do nothing
+END;
+q1:= 'create table simple_admin_all AS
+select all_geom.osm_id, all_geom.is_in_state,all_geom.is_in_country, ST_simplify(topo, $1) as wkb_geometry
+from all_geom ';
+
+IF array_length(i_osmid_list,1) > 0 THEN
+	condition:= 'WHERE is_in_country = ANY($2) OR osm_id = ANY($2)';
+	q1:=q1||condition;
+	EXECuTE q1 USING i_tolerance, i_osmid_list;
+ELSE
+	EXECUTE q1 USING i_tolerance;
+END IF;
+
+RAISE NOTICE 'Creating simple_admin_2...';
+-- simplify county
+BEGIN
+	drop table simple_admin_2 CASCADE;
+	EXCEPTION
+		WHEN SQLSTATE '42P01' THEN 
+		-- do nothing
+END;
+
+
+-- for county
+q1:= $$create table simple_admin_2 as select osm_id, wkb_geometry
+from simple_admin_all
+where is_in_state is not null and left(osm_id,3) != 'xxx' $$;
+
+IF array_length(i_osmid_list,1) > 0 THEN
+	condition:= ' AND is_in_country = ANY($1)';
+	q1:=q1||condition;
+	EXECuTE q1 USING i_osmid_list;
+ELSE
+	EXECUTE q1;
+END IF;
+
+
+
+-- simplify state
+RAISE NOTICE 'Creating simple_admin_1...';
+BEGIN
+	drop table simple_admin_1 CASCADE;
+	EXCEPTION
+		WHEN SQLSTATE '42P01' THEN 
+		-- do nothing
+END;
+
+
+q1:=$$create table simple_admin_1 as
+-- for states
+select is_in_state as osm_id, st_buildarea(st_union(wkb_geometry)) as wkb_geometry
+from simple_admin_all
+where is_in_state is not null $$;
+
+q2:=$$select osm_id, st_buildarea(st_union(wkb_geometry)) as wkb_geometry
+from simple_admin_all
+where is_in_state is null and left(osm_id,3)!= 'xxx'$$;
+
+IF array_length(i_osmid_list,1) > 0 THEN
+	condition:= ' and is_in_country = ANY($1)';
+	q1:=q1||condition||'group by is_in_state UNION '||q2||condition||' group by osm_id';
+	EXECuTE q1 USING i_osmid_list;
+ELSE
+	q1:=q1||'group by is_in_state UNION '||q2||' group by osm_id';
+	EXECUTE q1;
+END IF;
+
+
+-- simplify country
+RAISE NOTICE 'Creating simple_admin_0...';
+BEGIN
+	drop table simple_admin_0 CASCADE;
+	EXCEPTION
+		WHEN SQLSTATE '42P01' THEN 
+		-- do nothing
+END;
+
+q1:=$$create table simple_admin_0 as
+select is_in_country as osm_id, st_buildarea(st_union(wkb_geometry)) as wkb_geometry
+from simple_admin_all$$;
+
+IF array_length(i_osmid_list,1) > 0 THEN
+	condition:= ' WHERE is_in_country = ANY($1)';
+	q1:=q1||condition||$$ group by is_in_country$$;
+	EXECuTE q1 USING i_osmid_list;
+ELSE
+	q1:=q1||$$ group by is_in_country$$;
+	EXECUTE q1;
+END IF;
+
+
+-- create views of every country (in admin_level_0) and every other admin_level in the country
+CREATE VIEW simple_admin_0_view AS
+
+SELECT ad0.osm_id, ad0.name, sa0.wkb_geometry, ad0.wkb_geometry as natural_wkb_geometry
+FROM admin_level_0 ad0 INNER JOIN simple_admin_0 sa0 ON ad0.osm_id = sa0.osm_id;
+
+
+CREATE VIEW simple_admin_1_view AS
+
+SELECT ad1.osm_id, ad1.name, sa1.wkb_geometry, ad0.osm_id as is_in_country, ad1.wkb_geometry as natural_wkb_geometry
+FROM admin_level_0 ad0 INNER JOIN admin_level_1 ad1 ON ad0.osm_id = ad1.is_in
+    INNER JOIN simple_admin_1 sa1 ON ad1.osm_id = sa1.osm_id;
+
+CREATE VIEW simple_admin_2_view AS
+
+SELECT ad2.osm_id, ad2.name, sa2.wkb_geometry, ad0.osm_id as is_in_country, ad1.osm_id as is_in_state, ad2.wkb_geometry as natural_wkb_geometry
+FROM admin_level_0 ad0 INNER JOIN admin_level_1 ad1 ON ad0.osm_id = ad1.is_in
+    INNER JOIN admin_level_2 ad2 ON ad1.osm_id = ad2.is_in
+    INNER JOIN simple_admin_2 sa2 ON ad2.osm_id = sa2.osm_id;
+
+
+END;
+$func$
+LANGUAGE 'plpgsql' VOLATILE STRICT;
+
+-- select (st_XMax(wkb_geometry)-st_XMin(wkb_geometry))/80, (st_YMax(wkb_geometry)-st_YMin(wkb_geometry))/80
+
+-- from admin_level_0 
+-- where osm_id = '192787';
+
+
