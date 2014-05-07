@@ -240,8 +240,7 @@ select all_geom.is_in_country
 ,ST_simplify(topo_country, i_tolerance) as wkb_geometry
 from all_geom inner join admin_level_0 on all_geom.is_in_country = admin_level_0.osm_id;
 
-
-create views of every country (in admin_level_0) and every other admin_level in the country
+-- create views of every country (in admin_level_0) and every other admin_level in the country
 CREATE VIEW simple_admin_0_view AS
 
 SELECT ad0.osm_id, ad0.name, sa0.wkb_geometry, ad0.wkb_geometry as natural_wkb_geometry
