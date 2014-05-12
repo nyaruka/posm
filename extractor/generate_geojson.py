@@ -225,8 +225,8 @@ for osm_id in osm_ids:
 
             feature1 = simple_ad1.GetNextFeature()
         # write feature to the state.geojson
-        geojson_ds_country_simple = None
-        geojson_ds_country_normal = None
+        geojson_ds_state_simple = None
+        geojson_ds_state_normal = None
 
         # extract counties for a country
         filename2 = '{}admin{}{}.json'.format(ad0_osm_id, 2, '')
@@ -268,7 +268,7 @@ for osm_id in osm_ids:
             feature2 = simple_ad2.GetNextFeature()
         # write feature to the state.geojson
         geojson_ds_county_simple = None
-        geojson_ds_ccounty_normal = None
+        geojson_ds_county_normal = None
 
     else:
         logger.warning('Feature %s is missing ...', osm_id)
