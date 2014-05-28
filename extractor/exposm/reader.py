@@ -3,6 +3,8 @@ logger = logging.getLogger(__file__)
 
 from osgeo import ogr
 
+from .utils import prepare_osm_id
+
 
 class FeatureReader(object):
     """
@@ -87,7 +89,8 @@ class AdminLevelReader(FeatureReader):
             else:
                 logger.debug(
                     'Feature %s, boundary tag value: %s',
-                    feature.GetField('osm_id'), feature.GetField('boundary')
+                    prepare_osm_id(feature, layer),
+                    feature.GetField('boundary')
                 )
                 return False
         else:
