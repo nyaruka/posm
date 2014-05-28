@@ -5,15 +5,29 @@ import shapely.wkb
 from shapely.validation import explain_validity
 
 
-def osm_id_exists(osm_id, name):
-    """
-    Check if osm_id exists
-    """
-    if osm_id:
-        return True
+def prepare_osm_id(feature, layer):
+    osm_id = feature.GetField('osm_id')
+    osm_way_id = feature.GetField('osm_way_id')
+
+    if layer == 'points':
+        return 'P{}'.format(osm_id)
+    elif layer == 'lines':
+        return 'W{}'.format(osm_id)
+    elif layer == 'multipolygons':
+        if not(osm_id) and osm_way_id:
+            return 'W{}'.format(osm_way_id)
+        elif osm_id and not(osm_way_id):
+            return 'R{}'.format(osm_id)
+        else:
+            logger.error('Can\'t detect osm_id, discarding ...')
+            return None
+    elif layer == 'multilinestrings':
+        return 'R{}'.format(osm_id)
+    elif layer == 'other_relations':
+        return 'R{}'.format(osm_id)
     else:
-        logger.warning('Feature without OSM_ID, discarding... "%s"', name)
-        return False
+        logger.error('Got unsupported layer %s, discarding ...')
+        return None
 
 
 def intersect_geom(geom, index, mapping):

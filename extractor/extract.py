@@ -15,7 +15,7 @@ logger = logging.getLogger(__file__)
 
 from exposm.writer import AdminLevelWriter
 from exposm.reader import AdminLevelReader
-from exposm.utils import osm_id_exists, check_bad_geom, intersect_geom
+from exposm.utils import check_bad_geom, intersect_geom, prepare_osm_id
 
 
 def read_admin_check_files():
@@ -76,7 +76,9 @@ def main():
     for layer, feature in lyr_read.readData():
 
         # get data
-        osm_id = feature.GetField('osm_id')
+        osm_id = prepare_osm_id(feature, layer)
+        if not osm_id:
+            continue
         admin_level = feature.GetField('admin_level')
         name = feature.GetField('name')
         name_en = feature.GetField('name:en')
@@ -85,7 +87,7 @@ def main():
 
         bad_geom = check_bad_geom(geom_raw, osm_id)
         # BONKERS features usually crash QGIS, we need to skip those
-        if bad_geom or not(osm_id_exists(osm_id, name)):
+        if bad_geom:
             # add bad geom to the list
             unusable_features.add((layer, osm_id))
             # skip further processing
@@ -128,7 +130,9 @@ def main():
     lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 
     for layer, feature in lyr_read.readData():
-        osm_id = feature.GetField('osm_id')
+        osm_id = prepare_osm_id(feature, layer)
+        if not osm_id:
+            continue
         admin_level = feature.GetField('admin_level')
         name = feature.GetField('name')
         name_en = feature.GetField('name:en')
@@ -212,7 +216,10 @@ def main():
 
     for layer, feature in lyr_read.readData():
 
-        osm_id = feature.GetField('osm_id')
+        osm_id = prepare_osm_id(feature, layer)
+        if not osm_id:
+            continue
+
         admin_level = feature.GetField('admin_level')
         name = feature.GetField('name')
         name_en = feature.GetField('name:en')
