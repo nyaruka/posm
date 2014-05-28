@@ -89,7 +89,7 @@ class AdminLevelReader(FeatureReader):
             else:
                 logger.debug(
                     'Feature %s, boundary tag value: %s',
-                    prepare_osm_id(feature, layer),
+                    prepare_osm_id(feature, layer.GetName()),
                     feature.GetField('boundary')
                 )
                 return False
