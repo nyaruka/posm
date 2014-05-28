@@ -4,6 +4,7 @@ DECLARE
 t_count INTEGER;
 t_current INTEGER;
 rec record;
+start_time timestamp;
 BEGIN
 t_current := 1;
 
@@ -13,10 +14,21 @@ PERFORM AddTopoGeometryColumn('admin_topo', 'public', 'all_geom', 'topo', 'MULTI
 
 select count(*) INTO t_count FROM all_geom;
 
+-- add internal logging table
+BEGIN
+	DROP TABLE create_base_topology_log;
+	EXCEPTION
+		WHEN SQLSTATE '42P01' THEN
+END;
+CREATE TABLE create_base_topology_log (osm_id varchar(255), duration interval);
+
 FOR rec in SELECT * FROM all_geom order by osm_id ASC LOOP
 	BEGIN
+		start_time = clock_timestamp();
 		UPDATE all_geom SET topo = toTopoGeom(wkb_geometry, 'admin_topo', (SELECT layer_id from topology.layer where feature_column = 'topo'))
 		WHERE osm_id = rec.osm_id;
+		-- add info to the log table
+		INSERT INTO create_base_topology_log VALUES (rec.osm_id, clock_timestamp() - start_time);
 	EXCEPTION
 		WHEN OTHERS THEN
 			RAISE WARNING 'Topology generation failed, removing feature % - %', rec.osm_id, SQLERRM;
