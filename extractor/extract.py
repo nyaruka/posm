@@ -89,7 +89,18 @@ def main():
         # BONKERS features usually crash QGIS, we need to skip those
         if bad_geom:
             # add bad geom to the list
-            unusable_features.add((layer, osm_id))
+            unusable_features.add(osm_id)
+            # skip further processing
+            continue
+
+        if feature.GetField('boundary') != 'administrative':
+            logger.debug(
+                'Feature %s, boundary tag value: %s',
+                osm_id,
+                feature.GetField('boundary')
+            )
+            # add bad feature to unusable features
+            unusable_features.add(osm_id)
             # skip further processing
             continue
 
@@ -140,11 +151,10 @@ def main():
 
         feature_data = []
 
-        if (layer, osm_id) in unusable_features:
+        if osm_id in unusable_features:
             # skip this feature
             logger.debug(
-                'Feature previously marked as unusable: %s-%s, skipping',
-                layer, osm_id
+                'Feature previously marked as unusable: %s, skipping', osm_id
             )
             continue
 
@@ -227,11 +237,10 @@ def main():
 
         feature_data = []
 
-        if (layer, osm_id) in unusable_features:
+        if osm_id in unusable_features:
             # skip this feature
             logger.debug(
-                'Feature previously marked as unusable: %s-%s, skipping',
-                layer, osm_id
+                'Feature previously marked as unusable: %s, skipping', osm_id
             )
             continue
 

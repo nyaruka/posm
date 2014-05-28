@@ -3,8 +3,6 @@ logger = logging.getLogger(__file__)
 
 from osgeo import ogr
 
-from .utils import prepare_osm_id
-
 
 class FeatureReader(object):
     """
@@ -84,14 +82,6 @@ class AdminLevelReader(FeatureReader):
     def test_conformity(self, layer, feature):
         # if layer has admin_level, use this feature
         if layer.GetLayerDefn().GetFieldIndex('admin_level') >= 0:
-            if feature.GetField('boundary') == 'administrative':
-                return True
-            else:
-                logger.debug(
-                    'Feature %s, boundary tag value: %s',
-                    prepare_osm_id(feature, layer.GetName()),
-                    feature.GetField('boundary')
-                )
-                return False
+            return True
         else:
             return False
