@@ -42,11 +42,12 @@ logging:
             mode: w
             filename: /tmp/export.log
 
-    loggers:
-        extract:
-            level: DEBUG
-            handlers:
-                - console
+    # optionally set a specific logger for extract module
+    # loggers:
+    #     extract:
+    #         level: DEBUG
+    #         handlers:
+    #             - console
 
     root:
         level: DEBUG
