@@ -40,7 +40,7 @@ PERFORM AddTopoGeometryColumn('admin_topo', 'public', 'all_geom', 'topo_state', 
 
 update all_geom as ag SET topo_state = topology.CreateTopoGeom(
   'admin_topo', -- topo name
-  3, -- topo type 
+  3, -- topo type
   (SELECT layer_id from topology.layer where feature_column = 'topo_state'),
   inner_query.bfaces)
  FROM (SELECT b.is_in_state, topology.TopoElementArray_Agg(ARRAY[(topo).id, (SELECT layer_id from topology.layer where feature_column = 'topo')]) As bfaces -- 1 == parent topo
@@ -52,7 +52,7 @@ WHERE inner_query.is_in_state = ag.is_in_state;
 
 update all_geom as ag SET topo_state = topology.CreateTopoGeom(
   'admin_topo', -- topo name
-  3, -- topo type 
+  3, -- topo type
   (SELECT layer_id from topology.layer where feature_column = 'topo_state'), -- layer
   inner_query.bfaces)
 FROM (SELECT b.osm_id, ARRAY[ARRAY[(topo).id, (SELECT layer_id from topology.layer where feature_column = 'topo')]]::topology.topoelementarray As bfaces -- 1 == parent topo
@@ -73,7 +73,7 @@ PERFORM AddTopoGeometryColumn('admin_topo', 'public', 'all_geom', 'topo_country'
 
 update all_geom as ag SET topo_country = topology.CreateTopoGeom(
   'admin_topo', -- topo name
-  3, -- topo type 
+  3, -- topo type
   (SELECT layer_id from topology.layer where feature_column = 'topo_country'), -- layer
   inner_query.bfaces)
  FROM (SELECT b.is_in_country, topology.TopoElementArray_Agg(ARRAY[(topo_state).id, (SELECT layer_id from topology.layer where feature_column = 'topo_state')]) As bfaces -- 5 == parent topo
@@ -84,7 +84,7 @@ WHERE inner_query.is_in_country = ag.is_in_country;
 
 update all_geom as ag SET topo_country = topology.CreateTopoGeom(
   'admin_topo', -- topo name
-  3, -- topo type 
+  3, -- topo type
   (SELECT layer_id from topology.layer where feature_column = 'topo_country'), -- layer
   inner_query.bfaces)
  FROM (SELECT b.osm_id, ARRAY[ARRAY[(topo_state).id, (SELECT layer_id from topology.layer where feature_column = 'topo_state')]]::topology.topoelementarray As bfaces -- 5 == parent topo
@@ -110,7 +110,7 @@ BEGIN
 BEGIN
 	DROP TABLE all_geom;
 	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN 
+		WHEN SQLSTATE '42P01' THEN
 END;
 CREATE TABLE all_geom (osm_id varchar(255), is_in_state varchar(255), is_in_country varchar(255), adminlevel integer, wkb_geometry GEOMETRY(MULTIPOLYGON,4326));
 
@@ -125,7 +125,7 @@ CREATE TABLE all_geom (osm_id varchar(255), is_in_state varchar(255), is_in_coun
 			RAISE WARNING 'Cannot calculate geometry difference, skipping ...  %', SQLERRM;
 			CONTINUE; -- skip this iteration, don't process this feature
 	END;
-	
+
 	if ST_isempty(t_geom) THEN
 		RAISE DEBUG 'Good data %', rec.osm_id;
 		-- add admin_level_2 geom
@@ -191,7 +191,7 @@ RAISE NOTICE 'Creating simple_admin_2...';
 BEGIN
 	drop table simple_admin_2 CASCADE;
 	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN 
+		WHEN SQLSTATE '42P01' THEN
 		-- do nothing
 END;
 
@@ -205,7 +205,7 @@ RAISE NOTICE 'Creating simple_admin_1...';
 BEGIN
 	drop table simple_admin_1 CASCADE;
 	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN 
+		WHEN SQLSTATE '42P01' THEN
 		-- do nothing
 END;
 
@@ -225,7 +225,7 @@ RAISE NOTICE 'Creating simple_admin_0...';
 BEGIN
 	drop table simple_admin_0 CASCADE;
 	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN 
+		WHEN SQLSTATE '42P01' THEN
 		-- do nothing
 END;
 
@@ -233,9 +233,9 @@ create table simple_admin_0 AS
 select all_geom.osm_id
 , ST_simplify(topo_country, i_tolerance) as wkb_geometry
 from all_geom inner join admin_level_0 on all_geom.osm_id = admin_level_0.osm_id
--- 
- UNION 
--- 
+--
+ UNION
+--
 select all_geom.is_in_country
 ,ST_simplify(topo_country, i_tolerance) as wkb_geometry
 from all_geom inner join admin_level_0 on all_geom.is_in_country = admin_level_0.osm_id;
@@ -279,7 +279,7 @@ RAISE NOTICE 'Simplifying base topology....';
 BEGIN
 	drop table simple_admin_all CASCADE;
 	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN 
+		WHEN SQLSTATE '42P01' THEN
 		-- do nothing
 END;
 q1:= 'create table simple_admin_all AS
@@ -299,7 +299,7 @@ RAISE NOTICE 'Creating simple_admin_2...';
 BEGIN
 	drop table simple_admin_2 CASCADE;
 	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN 
+		WHEN SQLSTATE '42P01' THEN
 		-- do nothing
 END;
 
@@ -324,7 +324,7 @@ RAISE NOTICE 'Creating simple_admin_1...';
 BEGIN
 	drop table simple_admin_1 CASCADE;
 	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN 
+		WHEN SQLSTATE '42P01' THEN
 		-- do nothing
 END;
 
@@ -354,7 +354,7 @@ RAISE NOTICE 'Creating simple_admin_0...';
 BEGIN
 	drop table simple_admin_0 CASCADE;
 	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN 
+		WHEN SQLSTATE '42P01' THEN
 		-- do nothing
 END;
 
