@@ -82,6 +82,13 @@ class AdminLevelReader(FeatureReader):
     def test_conformity(self, layer, feature):
         # if layer has admin_level, use this feature
         if layer.GetLayerDefn().GetFieldIndex('admin_level') >= 0:
-            return True
+            if feature.GetField('boundary') == 'administrative':
+                return True
+            else:
+                logger.debug(
+                    'Feature %s, boundary tag value: %s',
+                    feature.GetField('osm_id'), feature.GetField('boundary')
+                )
+                return False
         else:
             return False
