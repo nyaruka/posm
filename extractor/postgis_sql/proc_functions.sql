@@ -243,19 +243,19 @@ from all_geom inner join admin_level_0 on all_geom.is_in_country = admin_level_0
 -- create views of every country (in admin_level_0) and every other admin_level in the country
 CREATE VIEW simple_admin_0_view AS
 
-SELECT ad0.osm_id, ad0.name, sa0.wkb_geometry, ad0.wkb_geometry as natural_wkb_geometry
+SELECT ad0.osm_id, ad0.name, ad0.name_en, sa0.wkb_geometry, ad0.wkb_geometry as natural_wkb_geometry
 FROM admin_level_0 ad0 INNER JOIN simple_admin_0 sa0 ON ad0.osm_id = sa0.osm_id;
 
 
 CREATE VIEW simple_admin_1_view AS
 
-SELECT ad1.osm_id, ad1.name, sa1.wkb_geometry, ad0.osm_id as is_in_country, ad1.wkb_geometry as natural_wkb_geometry
+SELECT ad1.osm_id, ad1.name, ad1.name_en, sa1.wkb_geometry, ad0.osm_id as is_in_country, ad1.wkb_geometry as natural_wkb_geometry
 FROM admin_level_0 ad0 INNER JOIN admin_level_1 ad1 ON ad0.osm_id = ad1.is_in
     INNER JOIN simple_admin_1 sa1 ON ad1.osm_id = sa1.osm_id;
 
 CREATE VIEW simple_admin_2_view AS
 
-SELECT ad2.osm_id, ad2.name, sa2.wkb_geometry, ad0.osm_id as is_in_country, ad1.osm_id as is_in_state, ad2.wkb_geometry as natural_wkb_geometry
+SELECT ad2.osm_id, ad2.name, ad2.name_en, sa2.wkb_geometry, ad0.osm_id as is_in_country, ad1.osm_id as is_in_state, ad2.wkb_geometry as natural_wkb_geometry
 FROM admin_level_0 ad0 INNER JOIN admin_level_1 ad1 ON ad0.osm_id = ad1.is_in
     INNER JOIN admin_level_2 ad2 ON ad1.osm_id = ad2.is_in
     INNER JOIN simple_admin_2 sa2 ON ad2.osm_id = sa2.osm_id;
@@ -375,19 +375,19 @@ END IF;
 -- create views of every country (in admin_level_0) and every other admin_level in the country
 CREATE VIEW simple_admin_0_view AS
 
-SELECT ad0.osm_id, ad0.name, sa0.wkb_geometry, ad0.wkb_geometry as natural_wkb_geometry
+SELECT ad0.osm_id, ad0.name, ad0.name_en, sa0.wkb_geometry, ad0.wkb_geometry as natural_wkb_geometry
 FROM admin_level_0 ad0 INNER JOIN simple_admin_0 sa0 ON ad0.osm_id = sa0.osm_id;
 
 
 CREATE VIEW simple_admin_1_view AS
 
-SELECT ad1.osm_id, ad1.name, sa1.wkb_geometry, ad0.osm_id as is_in_country, ad1.wkb_geometry as natural_wkb_geometry
+SELECT ad1.osm_id, ad1.name, ad1.name_en, sa1.wkb_geometry, ad0.osm_id as is_in_country, ad1.wkb_geometry as natural_wkb_geometry
 FROM admin_level_0 ad0 INNER JOIN admin_level_1 ad1 ON ad0.osm_id = ad1.is_in
     INNER JOIN simple_admin_1 sa1 ON ad1.osm_id = sa1.osm_id;
 
 CREATE VIEW simple_admin_2_view AS
 
-SELECT ad2.osm_id, ad2.name, sa2.wkb_geometry, ad0.osm_id as is_in_country, ad1.osm_id as is_in_state, ad2.wkb_geometry as natural_wkb_geometry
+SELECT ad2.osm_id, ad2.name, ad2.name_en, sa2.wkb_geometry, ad0.osm_id as is_in_country, ad1.osm_id as is_in_state, ad2.wkb_geometry as natural_wkb_geometry
 FROM admin_level_0 ad0 INNER JOIN admin_level_1 ad1 ON ad0.osm_id = ad1.is_in
     INNER JOIN admin_level_2 ad2 ON ad1.osm_id = ad2.is_in
     INNER JOIN simple_admin_2 sa2 ON ad2.osm_id = sa2.osm_id;
@@ -396,10 +396,3 @@ FROM admin_level_0 ad0 INNER JOIN admin_level_1 ad1 ON ad0.osm_id = ad1.is_in
 END;
 $func$
 LANGUAGE 'plpgsql' VOLATILE STRICT;
-
--- select (st_XMax(wkb_geometry)-st_XMin(wkb_geometry))/80, (st_YMax(wkb_geometry)-st_YMin(wkb_geometry))/80
-
--- from admin_level_0 
--- where osm_id = '192787';
-
-
