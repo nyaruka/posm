@@ -10,7 +10,7 @@ def prepare_osm_id(feature, layer):
     osm_way_id = feature.GetField('osm_way_id')
 
     if layer == 'points':
-        return 'P{}'.format(osm_id)
+        return 'N{}'.format(osm_id)
     elif layer == 'lines':
         return 'W{}'.format(osm_id)
     elif layer == 'multipolygons':
