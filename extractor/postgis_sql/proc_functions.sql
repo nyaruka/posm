@@ -1,5 +1,5 @@
-﻿create or replace function create_base_topology() RETURNS VOID AS
-$$
+﻿CREATE OR REPLACE FUNCTION create_base_topology() RETURNS VOID AS
+$func$
 DECLARE
 t_count INTEGER;
 t_current INTEGER;
@@ -25,6 +25,7 @@ CREATE TABLE create_base_topology_log (osm_id varchar(255), duration interval);
 FOR rec in SELECT * FROM all_geom order by osm_id ASC LOOP
 	BEGIN
 		start_time = clock_timestamp();
+		RAISE NOTICE 'Working on %/% - %', t_current, t_count, rec.osm_id;
 		UPDATE all_geom SET topo = toTopoGeom(wkb_geometry, 'admin_topo', (SELECT layer_id from topology.layer where feature_column = 'topo'))
 		WHERE osm_id = rec.osm_id;
 		-- add info to the log table
@@ -34,84 +35,15 @@ FOR rec in SELECT * FROM all_geom order by osm_id ASC LOOP
 			RAISE WARNING 'Topology generation failed, removing feature % - %', rec.osm_id, SQLERRM;
 			DELETE FROM all_geom WHERE osm_id = rec.osm_id;
 	END;
-	RAISE NOTICE 'Done %/% - %', t_current, t_count, rec.osm_id;
 	t_current:=t_current + 1;
 END LOOP;
 END;
-$$
-LANGUAGE 'plpgsql' VOLATILE STRICT;
-
-create or replace function create_state_topology() RETURNS VOID AS
-$$
-BEGIN
-
--- SELECT DropTopoGeometryColumn('public', 'all_geom', 'topo_state');
-
--- create state_topology
-PERFORM AddTopoGeometryColumn('admin_topo', 'public', 'all_geom', 'topo_state', 'MULTIPOLYGON', (SELECT layer_id from topology.layer where feature_column = 'topo')); -- id = 2
-
-update all_geom as ag SET topo_state = topology.CreateTopoGeom(
-  'admin_topo', -- topo name
-  3, -- topo type
-  (SELECT layer_id from topology.layer where feature_column = 'topo_state'),
-  inner_query.bfaces)
- FROM (SELECT b.is_in_state, topology.TopoElementArray_Agg(ARRAY[(topo).id, (SELECT layer_id from topology.layer where feature_column = 'topo')]) As bfaces -- 1 == parent topo
-FROM all_geom As b inner join admin_level_1 on b.is_in_state = admin_level_1.osm_id
-GROUP BY b.is_in_state
-) as inner_query
-WHERE inner_query.is_in_state = ag.is_in_state;
-
-
-update all_geom as ag SET topo_state = topology.CreateTopoGeom(
-  'admin_topo', -- topo name
-  3, -- topo type
-  (SELECT layer_id from topology.layer where feature_column = 'topo_state'), -- layer
-  inner_query.bfaces)
-FROM (SELECT b.osm_id, ARRAY[ARRAY[(topo).id, (SELECT layer_id from topology.layer where feature_column = 'topo')]]::topology.topoelementarray As bfaces -- 1 == parent topo
-FROM all_geom b -- inner join admin_level_1 ON admin_level_1.osm_id = b.osm_id
-where b.topo_state is null
-) as inner_query
-WHERE inner_query.osm_id = ag.osm_id;
-
-END;
-$$
-LANGUAGE 'plpgsql' VOLATILE STRICT;
-
-create or replace function create_country_topology() RETURNS VOID AS
-$$
-BEGIN
--- create country topology
-PERFORM AddTopoGeometryColumn('admin_topo', 'public', 'all_geom', 'topo_country', 'MULTIPOLYGON',(SELECT layer_id from topology.layer where feature_column = 'topo_state'));
-
-update all_geom as ag SET topo_country = topology.CreateTopoGeom(
-  'admin_topo', -- topo name
-  3, -- topo type
-  (SELECT layer_id from topology.layer where feature_column = 'topo_country'), -- layer
-  inner_query.bfaces)
- FROM (SELECT b.is_in_country, topology.TopoElementArray_Agg(ARRAY[(topo_state).id, (SELECT layer_id from topology.layer where feature_column = 'topo_state')]) As bfaces -- 5 == parent topo
-FROM all_geom As b inner join admin_level_0 on b.is_in_country = admin_level_0.osm_id
-
-GROUP BY b.is_in_country) as inner_query
-WHERE inner_query.is_in_country = ag.is_in_country;
-
-update all_geom as ag SET topo_country = topology.CreateTopoGeom(
-  'admin_topo', -- topo name
-  3, -- topo type
-  (SELECT layer_id from topology.layer where feature_column = 'topo_country'), -- layer
-  inner_query.bfaces)
- FROM (SELECT b.osm_id, ARRAY[ARRAY[(topo_state).id, (SELECT layer_id from topology.layer where feature_column = 'topo_state')]]::topology.topoelementarray As bfaces -- 5 == parent topo
-FROM all_geom b
-where topo_country is null
-) as inner_query
-WHERE inner_query.osm_id = ag.osm_id;
-END;
-$$
+$func$
 LANGUAGE 'plpgsql' VOLATILE STRICT;
 
 
-
-create or replace function deconstruct_geometry(i_fill_holes BOOLEAN DEFAULT 't') RETURNS VOID AS
-$$
+CREATE OR REPLACE FUNCTION deconstruct_geometry(i_fill_holes BOOLEAN DEFAULT 't') RETURNS VOID AS
+$func$
 DECLARE
 rec RECORD;
 t_geom GEOMETRY;
@@ -189,97 +121,11 @@ FOR rec IN SELECT * FROM admin_level_0 order by osm_id ASC LOOP
 
 END LOOP;
 END;
-$$
+$func$
 LANGUAGE 'plpgsql' VOLATILE STRICT;
 
 
-create or replace function create_simple_geoms(i_tolerance float DEFAULT 0.1) RETURNS VOID AS
-$$
-DECLARE
-BEGIN
-
-RAISE NOTICE 'Creating simple_admin_2...';
--- simplify county
-BEGIN
-	drop table simple_admin_2 CASCADE;
-	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN
-		-- do nothing
-END;
-
-
-create table simple_admin_2 AS
-select all_geom.osm_id, ST_simplify(topo, i_tolerance) as wkb_geometry from all_geom inner join admin_level_2 on all_geom.osm_id = admin_level_2.osm_id;
-
-
--- simplify state
-RAISE NOTICE 'Creating simple_admin_1...';
-BEGIN
-	drop table simple_admin_1 CASCADE;
-	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN
-		-- do nothing
-END;
-
-create table simple_admin_1 AS
-select all_geom.osm_id
-,ST_simplify(topo_state, i_tolerance) as wkb_geometry
-from all_geom inner join admin_level_1 on all_geom.osm_id =admin_level_1.osm_id
-
-UNION
-
-select all_geom.is_in_state
-,ST_simplify(topo_state, i_tolerance) as wkb_geometry
-from all_geom inner join admin_level_1 on all_geom.is_in_state =admin_level_1.osm_id;
-
--- simplify country
-RAISE NOTICE 'Creating simple_admin_0...';
-BEGIN
-	drop table simple_admin_0 CASCADE;
-	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN
-		-- do nothing
-END;
-
-create table simple_admin_0 AS
-select all_geom.osm_id
-, ST_simplify(topo_country, i_tolerance) as wkb_geometry
-from all_geom inner join admin_level_0 on all_geom.osm_id = admin_level_0.osm_id
---
- UNION
---
-select all_geom.is_in_country
-,ST_simplify(topo_country, i_tolerance) as wkb_geometry
-from all_geom inner join admin_level_0 on all_geom.is_in_country = admin_level_0.osm_id;
-
--- create views of every country (in admin_level_0) and every other admin_level in the country
-CREATE VIEW simple_admin_0_view AS
-
-SELECT ad0.osm_id, ad0.name, ad0.name_en, ad0.iso3166, sa0.wkb_geometry, ad0.wkb_geometry as natural_wkb_geometry
-FROM admin_level_0 ad0 INNER JOIN simple_admin_0 sa0 ON ad0.osm_id = sa0.osm_id;
-
-
-CREATE VIEW simple_admin_1_view AS
-
-SELECT ad1.osm_id, ad1.name, ad1.name_en, sa1.wkb_geometry, ad0.osm_id as is_in_country, ad1.wkb_geometry as natural_wkb_geometry
-FROM admin_level_0 ad0 INNER JOIN admin_level_1 ad1 ON ad0.osm_id = ad1.is_in
-    INNER JOIN simple_admin_1 sa1 ON ad1.osm_id = sa1.osm_id;
-
-CREATE VIEW simple_admin_2_view AS
-
-SELECT ad2.osm_id, ad2.name, ad2.name_en, sa2.wkb_geometry, ad0.osm_id as is_in_country, ad1.osm_id as is_in_state, ad2.wkb_geometry as natural_wkb_geometry
-FROM admin_level_0 ad0 INNER JOIN admin_level_1 ad1 ON ad0.osm_id = ad1.is_in
-    INNER JOIN admin_level_2 ad2 ON ad1.osm_id = ad2.is_in
-    INNER JOIN simple_admin_2 sa2 ON ad2.osm_id = sa2.osm_id;
-
-END;
-$$
-LANGUAGE 'plpgsql' VOLATILE STRICT;
-
-
-
-
-create or replace function simplify_dissolve(i_tolerance IN float DEFAULT 0.1, i_osmid_list IN VARCHAR[] DEFAULT '{}') RETURNS VOID AS
+CREATE OR REPLACE FUNCTION simplify_dissolve(i_tolerance IN float DEFAULT 0.1, i_osmid_list IN VARCHAR[] DEFAULT '{}') RETURNS VOID AS
 $func$
 DECLARE
 q1 VARCHAR;
@@ -387,7 +233,7 @@ END IF;
 -- create views of every country (in admin_level_0) and every other admin_level in the country
 CREATE VIEW simple_admin_0_view AS
 
-SELECT ad0.osm_id, ad0.name, ad0.name_en, sa0.wkb_geometry, ad0.wkb_geometry as natural_wkb_geometry
+SELECT ad0.osm_id, ad0.name, ad0.name_en, ad0.iso3166, sa0.wkb_geometry, ad0.wkb_geometry as natural_wkb_geometry
 FROM admin_level_0 ad0 INNER JOIN simple_admin_0 sa0 ON ad0.osm_id = sa0.osm_id;
 
 
