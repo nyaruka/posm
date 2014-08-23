@@ -255,7 +255,7 @@ from all_geom inner join admin_level_0 on all_geom.is_in_country = admin_level_0
 -- create views of every country (in admin_level_0) and every other admin_level in the country
 CREATE VIEW simple_admin_0_view AS
 
-SELECT ad0.osm_id, ad0.name, ad0.name_en, sa0.wkb_geometry, ad0.wkb_geometry as natural_wkb_geometry
+SELECT ad0.osm_id, ad0.name, ad0.name_en, ad0.iso3166, sa0.wkb_geometry, ad0.wkb_geometry as natural_wkb_geometry
 FROM admin_level_0 ad0 INNER JOIN simple_admin_0 sa0 ON ad0.osm_id = sa0.osm_id;
 
 

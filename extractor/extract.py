@@ -82,6 +82,7 @@ def main():
         admin_level = feature.GetField('admin_level')
         name = feature.GetField('name')
         name_en = feature.GetField('name:en')
+        iso3166 = feature.GetField('ISO3166-1').upper()
         geom_raw = feature.GetGeometryRef()
         feature_data = []
 
@@ -113,6 +114,7 @@ def main():
                 ('name', name),
                 ('name_en', name_en),
                 ('adminlevel', admin_level),
+                ('iso3166', iso3166),
                 ('is_in', None)
             ]
             lyr_save.saveFeature(feature_data, geom_raw)

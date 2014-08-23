@@ -137,10 +137,16 @@ class AdminLevelWriter(FeatureWriter):
         adminlevel_def = ogr.FieldDefn('adminlevel', ogr.OFTInteger)
         # adminlevel_def.SetWidth(254)
 
+        iso3166_def = ogr.FieldDefn('iso3166', ogr.OFTString)
+        iso3166_def.SetWidth(254)
+
         is_in_def = ogr.FieldDefn('is_in', ogr.OFTString)
         is_in_def.SetWidth(254)
 
-        return [id_def, name_def, name_en_def, adminlevel_def, is_in_def]
+        return [
+            id_def, name_def, name_en_def, adminlevel_def, iso3166_def,
+            is_in_def
+        ]
 
 
 class DiscardFeatureWriter(FeatureWriter):

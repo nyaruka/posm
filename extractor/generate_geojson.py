@@ -26,7 +26,10 @@ group = parser.add_mutually_exclusive_group()
 
 group.add_argument(
     'osm_ids', metavar='osm_id', type=str, nargs='*',
-    help='an osm_id of admin_level_0 feature', default=[]
+    help=(
+        'an osm_id of an admin_level_0 feature or an iso code, for example '
+        'isoNG will select a country with iso3166 code NG'),
+    default=[]
 )
 
 group.add_argument(
@@ -80,6 +83,11 @@ def create_GEOJSON(path, filename):
     name_en_def.SetWidth(254)
 
     layer.CreateField(name_en_def)
+
+    iso3166_def = ogr.FieldDefn('iso3166', ogr.OFTString)
+    iso3166_def.SetWidth(254)
+
+    layer.CreateField(iso3166_def)
 
     is_in_c_def = ogr.FieldDefn('is_in_country', ogr.OFTString)
     is_in_c_def.SetWidth(254)
@@ -151,20 +159,26 @@ else:
     osm_ids = cli_args.osm_ids
 
 for osm_id in osm_ids:
-    simple_ad0.SetAttributeFilter('osm_id=\'{}\''.format(osm_id))
+    if osm_id[:3] == 'iso':
+        simple_ad0.SetAttributeFilter(
+            'iso3166=\'{}\''.format(osm_id[3:].upper())
+        )
+    else:
+        simple_ad0.SetAttributeFilter('osm_id=\'{}\''.format(osm_id))
     feature0 = simple_ad0.GetNextFeature()
     if feature0:
         logger.info('Found feature %s ...', osm_id)
         ad0_osm_id = feature0.GetField('osm_id')
         ad0_name = feature0.GetField('name')
         ad0_name_en = feature0.GetField('name_en')
+        ad0_iso3166 = feature0.GetField('iso3166')
         ad0_is_in_c = None
         ad0_is_in_s = None
 
         ad0_attrs = [
             ('osm_id', ad0_osm_id), ('is_in_country', ad0_is_in_c),
             ('is_in_state', ad0_is_in_s), ('name', ad0_name),
-            ('name_en', ad0_name_en)
+            ('name_en', ad0_name_en), ('iso3166', ad0_iso3166)
         ]
 
         filename = '{}admin{}{}.json'.format(ad0_osm_id, 0, '')
@@ -216,11 +230,12 @@ for osm_id in osm_ids:
             ad1_name = feature1.GetField('name')
             ad1_name_en = feature1.GetField('name_en')
             ad1_is_in_s = None
+            ad1_iso3166 = None
 
             ad1_attrs = [
                 ('osm_id', ad1_osm_id), ('is_in_country', ad1_is_in_c),
                 ('is_in_state', ad1_is_in_s), ('name', ad1_name),
-                ('name_en', ad1_name_en)
+                ('name_en', ad1_name_en), ('iso3166', ad1_iso3166)
             ]
 
             write_feature(
@@ -260,11 +275,12 @@ for osm_id in osm_ids:
             ad2_name_en = feature2.GetField('name_en')
             ad2_is_in_c = feature2.GetField('is_in_country')
             ad2_is_in_s = feature2.GetField('is_in_state')
+            ad2_iso3166 = None
 
             ad2_attrs = [
                 ('osm_id', ad2_osm_id), ('is_in_country', ad2_is_in_c),
                 ('is_in_state', ad2_is_in_s), ('name', ad2_name),
-                ('name_en', ad2_name_en)
+                ('name_en', ad2_name_en), ('iso3166', ad2_iso3166)
             ]
 
             write_feature(
