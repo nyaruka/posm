@@ -1,5 +1,5 @@
 import logging
-logger = logging.getLogger(__file__)
+LOG = logging.getLogger(__file__)
 
 import sys
 import os.path
@@ -59,7 +59,7 @@ class FeatureWriter(object):
         self.datasource = ogr.Open(self.database)
 
         if self.datasource is None:
-            logger.critical('Datasource creation failed.')
+            LOG.critical('Datasource creation failed.')
             sys.exit(1)
 
         self.layer = self.datasource.CreateLayer(
@@ -68,17 +68,17 @@ class FeatureWriter(object):
         )
 
         if self.layer is None:
-            logger.critical('Layer creation failed.')
+            LOG.critical('Layer creation failed.')
             sys.exit(1)
 
-        logger.info('Layer created: %s', self.layer_name)
+        LOG.info('Layer created: %s', self.layer_name)
         self.createFields()
 
     def createSHPLayer(self):
         self.datasource = self.driver.CreateDataSource(self.filename)
 
         if self.datasource is None:
-            logger.critical('Datasource creation failed.')
+            LOG.critical('Datasource creation failed.')
             sys.exit(1)
 
         self.layer = self.datasource.CreateLayer(
@@ -87,10 +87,10 @@ class FeatureWriter(object):
         )
 
         if self.layer is None:
-            logger.critical('Layer creation failed.')
+            LOG.critical('Layer creation failed.')
             sys.exit(1)
 
-        logger.info('Layer created: %s', self.filename)
+        LOG.info('Layer created: %s', self.filename)
         self.createFields()
 
     def defineFields(self):
@@ -99,7 +99,7 @@ class FeatureWriter(object):
     def createFields(self):
         for field in self.defineFields():
             if self.layer.CreateField(field) != 0:
-                logger.error('Creating field failed.')
+                LOG.error('Creating field failed.')
                 sys.exit(1)
 
     def saveFeature(self, feature_data, feature_geom):

@@ -13,7 +13,7 @@ from osgeo import ogr, osr
 from exposm.settings import settings
 # setup logging, has to be after exposm.settings
 logging.config.dictConfig(settings.get('logging'))
-logger = logging.getLogger(__file__)
+LOG = logging.getLogger(__file__)
 
 # define global SRS
 SRS = osr.SpatialReference()
@@ -73,7 +73,7 @@ def convert_to_topojson(path):
     # os.chdir(path)
     geojson_path = os.path.join(path, 'geometry.geojson')
     topojson_path = os.path.join(path, 'geometry.topojson')
-    logger.info('Converting %s to %s', geojson_path, topojson_path)
+    LOG.info('Converting %s to %s', geojson_path, topojson_path)
     result = subprocess.call(
         ['topojson', '-p', '-o', topojson_path, geojson_path],
         stdout=open(os.devnull, 'wb'),  # make it silent
@@ -81,7 +81,7 @@ def convert_to_topojson(path):
     )
 
     if result:
-        logger.error('Cannot convert to topojson...')
+        LOG.error('Cannot convert to topojson...')
 
 feature0 = simple_ad0.GetNextFeature()
 while feature0:
@@ -91,7 +91,7 @@ while feature0:
         settings.get('exposm').get('geojson_output_directory'),
         ad0_osm_id
     )
-    logger.info('Creating ad0 directory: %s', ad0_dir)
+    LOG.info('Creating ad0 directory: %s', ad0_dir)
     os.mkdir(ad0_dir)
 
     geojson_datasource_country = create_GEOJSON(ad0_dir)
@@ -108,7 +108,7 @@ while feature0:
             ad0_osm_id, ad1_osm_id
         )
 
-        logger.info('Creating ad1 directory: %s', ad1_dir)
+        LOG.info('Creating ad1 directory: %s', ad1_dir)
         os.mkdir(ad1_dir)
 
         # create state level geojson

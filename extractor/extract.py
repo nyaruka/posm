@@ -11,7 +11,7 @@ from exposm.settings import settings, admin_levels
 
 # setup logging, has to be after osmext.settings
 logging.config.dictConfig(settings.get('logging'))
-logger = logging.getLogger(__file__)
+LOG = logging.getLogger(__file__)
 
 from exposm.writer import AdminLevelWriter
 from exposm.reader import AdminLevelReader
@@ -72,7 +72,7 @@ def main():
 
     feature_id = 0
 
-    logger.info('Started exporting admin_level_0 boundaries!')
+    LOG.info('Started exporting admin_level_0 boundaries!')
     for layer, feature in lyr_read.readData():
 
         # get data
@@ -95,7 +95,7 @@ def main():
             continue
 
         if feature.GetField('boundary') != 'administrative':
-            logger.debug(
+            LOG.debug(
                 'Feature %s, boundary tag value: %s',
                 osm_id,
                 feature.GetField('boundary')
@@ -122,7 +122,7 @@ def main():
             spat_index_0.insert(
                 feature_id, geom.envelope.bounds, obj=osm_id
             )
-            logger.debug('Index %s, record %s', feature_id, osm_id)
+            LOG.debug('Index %s, record %s', feature_id, osm_id)
 
             feature_id += 1
 
@@ -155,7 +155,7 @@ def main():
 
         if osm_id in unusable_features:
             # skip this feature
-            logger.debug(
+            LOG.debug(
                 'Feature previously marked as unusable: %s, skipping', osm_id
             )
             continue
@@ -175,7 +175,7 @@ def main():
                 admin_levels['per_country'][is_in]['admin_level_1']
             )
             if search_admin_level:
-                logger.info(
+                LOG.info(
                     'Using custom admin_level for %s (%s)',
                     admin_levels.get('per_country')
                     .get(is_in).get('meta').get('name'), is_in
@@ -195,7 +195,7 @@ def main():
 
         if not(is_in):
             # if we can't determine relationship, skip this feature
-            logger.info('Missing country information ... %s', osm_id)
+            LOG.info('Missing country information ... %s', osm_id)
             continue
 
         # check current feature admin level
@@ -213,7 +213,7 @@ def main():
             spat_index_1.insert(
                 feature_id, geom.envelope.bounds, obj=osm_id
             )
-            logger.debug('Index %s, record %s', feature_id, osm_id)
+            LOG.debug('Index %s, record %s', feature_id, osm_id)
 
             feature_id += 1
 
@@ -241,7 +241,7 @@ def main():
 
         if osm_id in unusable_features:
             # skip this feature
-            logger.debug(
+            LOG.debug(
                 'Feature previously marked as unusable: %s, skipping', osm_id
             )
             continue
@@ -263,7 +263,7 @@ def main():
                 .get('admin_level_2')
             )
             if search_admin_level:
-                logger.info(
+                LOG.info(
                     'Using custom admin_level for %s (%s)',
                     admin_levels.get('per_country')
                     .get(is_in).get('meta').get('name'), is_in
@@ -283,7 +283,7 @@ def main():
 
         if not(is_in_state):
             # if we can't determine relationship, skip this feature
-            logger.info('Missing state information ... %s', osm_id)
+            LOG.info('Missing state information ... %s', osm_id)
             continue
 
         # check current feature admin level

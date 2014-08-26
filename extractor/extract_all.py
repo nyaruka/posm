@@ -7,7 +7,7 @@ from exposm.settings import settings
 
 # setup logging, has to be after osmext.settings
 logging.config.dictConfig(settings.get('logging'))
-logger = logging.getLogger(__file__)
+LOG = logging.getLogger(__file__)
 
 from exposm.writer import AdminLevelWriter, DiscardFeatureWriter
 from exposm.reader import AdminLevelReader
@@ -31,7 +31,7 @@ def main():
 
     lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 
-    logger.info('Started exporting admin_level_0 boundaries!')
+    LOG.info('Started exporting admin_level_0 boundaries!')
 
     for layer, feature in lyr_read.readData():
 
@@ -59,7 +59,7 @@ def main():
 
         # osm_id is crucial for establishing feature relationship
         if not(osm_id_exists(osm_id, name)):
-            logger.warning('Feature without OSM_ID, discarding... "%s"', name)
+            LOG.warning('Feature without OSM_ID, discarding... "%s"', name)
             feature_data = [
                 ('osm_id', osm_id),
                 ('name', name),
@@ -79,34 +79,34 @@ def main():
 
         # process national level boundary
         if admin_level == '1':
-            logger.debug('Writing admin_level=1, feature %s', osm_id)
+            LOG.debug('Writing admin_level=1, feature %s', osm_id)
             lyr_save1.saveFeature(feature_data, geom)
         if admin_level == '2':
-            logger.debug('Writing admin_level=2, feature %s', osm_id)
+            LOG.debug('Writing admin_level=2, feature %s', osm_id)
             lyr_save2.saveFeature(feature_data, geom)
         if admin_level == '3':
-            logger.debug('Writing admin_level=3, feature %s', osm_id)
+            LOG.debug('Writing admin_level=3, feature %s', osm_id)
             lyr_save3.saveFeature(feature_data, geom)
         if admin_level == '4':
-            logger.debug('Writing admin_level=4, feature %s', osm_id)
+            LOG.debug('Writing admin_level=4, feature %s', osm_id)
             lyr_save4.saveFeature(feature_data, geom)
         if admin_level == '5':
-            logger.debug('Writing admin_level=5, feature %s', osm_id)
+            LOG.debug('Writing admin_level=5, feature %s', osm_id)
             lyr_save5.saveFeature(feature_data, geom)
         if admin_level == '6':
-            logger.debug('Writing admin_level=6, feature %s', osm_id)
+            LOG.debug('Writing admin_level=6, feature %s', osm_id)
             lyr_save6.saveFeature(feature_data, geom)
         if admin_level == '7':
-            logger.debug('Writing admin_level=7, feature %s', osm_id)
+            LOG.debug('Writing admin_level=7, feature %s', osm_id)
             lyr_save7.saveFeature(feature_data, geom)
         if admin_level == '8':
-            logger.debug('Writing admin_level=8, feature %s', osm_id)
+            LOG.debug('Writing admin_level=8, feature %s', osm_id)
             lyr_save8.saveFeature(feature_data, geom)
         if admin_level == '9':
-            logger.debug('Writing admin_level=9, feature %s', osm_id)
+            LOG.debug('Writing admin_level=9, feature %s', osm_id)
             lyr_save9.saveFeature(feature_data, geom)
         if admin_level == '10':
-            logger.debug('Writing admin_level=10, feature %s', osm_id)
+            LOG.debug('Writing admin_level=10, feature %s', osm_id)
             lyr_save10.saveFeature(feature_data, geom)
 
     lyr_read.datasource = None

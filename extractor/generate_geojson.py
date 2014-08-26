@@ -15,7 +15,7 @@ from osgeo import ogr, osr
 from exposm.settings import settings
 # setup logging, has to be after exposm.settings
 logging.config.dictConfig(settings.get('logging'))
-logger = logging.getLogger(__file__)
+LOG = logging.getLogger(__file__)
 
 # define a simple argparser
 parser = argparse.ArgumentParser(
@@ -137,7 +137,7 @@ def create_archive():
         stderr=open(os.devnull, 'wb')
     )
     if result:
-        logger.error('Problem creating ZIP archive...')
+        LOG.error('Problem creating ZIP archive...')
 
 # use provided arguments
 if cli_args.rm:
@@ -167,7 +167,7 @@ for osm_id in osm_ids:
         simple_ad0.SetAttributeFilter('osm_id=\'{}\''.format(osm_id))
     feature0 = simple_ad0.GetNextFeature()
     if feature0:
-        logger.info('Found feature %s ...', osm_id)
+        LOG.info('Found feature %s ...', osm_id)
         ad0_osm_id = feature0.GetField('osm_id')
         ad0_name = feature0.GetField('name')
         ad0_name_en = feature0.GetField('name_en')
@@ -298,8 +298,8 @@ for osm_id in osm_ids:
         geojson_ds_county_normal = None
 
     else:
-        logger.warning('Feature %s is missing ...', osm_id)
+        LOG.warning('Feature %s is missing ...', osm_id)
 
 if osm_ids:
-    logger.info('Creating archive in the current directory...')
+    LOG.info('Creating archive in the current directory...')
     create_archive()

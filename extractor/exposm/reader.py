@@ -1,5 +1,5 @@
 import logging
-logger = logging.getLogger(__file__)
+LOG = logging.getLogger(__file__)
 
 from osgeo import ogr
 
@@ -15,7 +15,7 @@ class FeatureReader(object):
         self.filename = filename
 
         self.datasource = ogr.Open(self.filename)
-        logger.debug('Opening datasource: %s', self.filename)
+        LOG.debug('Opening datasource: %s', self.filename)
 
     def setFilter(self):
         nLayerCount = self.datasource.GetLayerCount()
@@ -59,7 +59,7 @@ class FeatureReader(object):
                     if self.test_conformity(lyr, feat):
                         featureCount += 1
                         if featureCount % 1000 == 0:
-                            logger.info('Features read: %s', featureCount)
+                            LOG.info('Features read: %s', featureCount)
 
                         # yield feature
                         yield (lyr.GetName(), feat)
@@ -70,7 +70,7 @@ class FeatureReader(object):
                     feat = lyr.GetNextFeature()
 
         # total features
-        logger.info('Total features read: %s', featureCount)
+        LOG.info('Total features read: %s', featureCount)
 
 
 class AdminLevelReader(FeatureReader):

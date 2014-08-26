@@ -1,5 +1,5 @@
 import logging
-logger = logging.getLogger(__file__)
+LOG = logging.getLogger(__file__)
 
 import shapely.wkb
 from shapely.validation import explain_validity
@@ -19,14 +19,14 @@ def prepare_osm_id(feature, layer):
         elif osm_id and not(osm_way_id):
             return 'R{}'.format(osm_id)
         else:
-            logger.error('Can\'t detect osm_id, discarding ...')
+            LOG.error('Can\'t detect osm_id, discarding ...')
             return None
     elif layer == 'multilinestrings':
         return 'R{}'.format(osm_id)
     elif layer == 'other_relations':
         return 'R{}'.format(osm_id)
     else:
-        logger.error('Got unsupported layer %s, discarding ...')
+        LOG.error('Got unsupported layer %s, discarding ...')
         return None
 
 
@@ -55,11 +55,11 @@ def check_bad_geom(geom, osm_id):
             return False
         else:
             reason = explain_validity(tst_geom)
-            logger.error(
+            LOG.error(
                 'Bad geometry for the feature %s, reason: %s', osm_id, reason
             )
     except:
         reason = 'BONKERS!'
-        logger.critical('BONKERS geometry for the feature %s', osm_id)
+        LOG.critical('BONKERS geometry for the feature %s', osm_id)
 
     return reason
