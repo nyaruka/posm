@@ -1,4 +1,6 @@
-GDAL==1.10.0
-PyYAML==3.11
-Shapely==1.3.0
-Rtree==0.7.0
+GDAL
+PyYAML
+Shapely
+Rtree
+urwid
+psycopg2
