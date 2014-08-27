@@ -1,4 +1,4 @@
-﻿CREATE OR REPLACE FUNCTION create_base_topology() RETURNS VOID AS
+CREATE OR REPLACE FUNCTION create_base_topology() RETURNS VOID AS
 $func$
 DECLARE
 t_count INTEGER;
