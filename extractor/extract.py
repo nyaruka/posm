@@ -82,7 +82,9 @@ def main():
         admin_level = feature.GetField('admin_level')
         name = feature.GetField('name')
         name_en = feature.GetField('name:en')
-        iso3166 = feature.GetField('ISO3166-1').upper()
+        iso3166 = feature.GetField('ISO3166-1')
+        if iso3166:
+            iso3166 = iso3166.upper()
         geom_raw = feature.GetGeometryRef()
         feature_data = []
 

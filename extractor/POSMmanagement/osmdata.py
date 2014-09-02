@@ -46,7 +46,7 @@ class OSMmanagement():
 
         if proc.returncode != 0:
             LOG.error('OSM data file download process has not exited cleanly!')
-            LOG.erorr(msg)
+            LOG.error(msg)
 
         if msg.find('HTTP/1.1 416 Requested Range Not Satisfiable') > 0:
             LOG.info(
@@ -82,7 +82,7 @@ class OSMmanagement():
 
         if proc.returncode != 0:
             LOG.error('OSM PBF to O5M file conversion has not exited cleanly!')
-            LOG.erorr(msg)
+            LOG.error(msg)
 
         os.chdir(curDir)
 
@@ -153,7 +153,7 @@ class OSMmanagement():
 
         if proc.returncode != 0:
             LOG.error('OSM filter has not exited cleanly!')
-            LOG.erorr(msg)
+            LOG.error(msg)
 
         os.chdir(curDir)
 
@@ -179,6 +179,6 @@ class OSMmanagement():
 
         if proc.returncode != 0:
             LOG.error('OSM convert has not exited cleanly!')
-            LOG.erorr(msg)
+            LOG.error(msg)
 
         os.chdir(curDir)

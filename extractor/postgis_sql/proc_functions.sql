@@ -1,3 +1,24 @@
+CREATE OR REPLACE FUNCTION init_base_topology() RETURNS VOID AS
+$func$
+BEGIN
+
+PERFORM DropTopology('admin_topo');
+PERFORM CreateTopology('admin_topo', 4326);
+PERFORM AddTopoGeometryColumn('admin_topo', 'public', 'all_geom', 'topo', 'MULTIPOLYGON');
+
+-- add internal logging table
+BEGIN
+	DROP TABLE create_base_topology_log;
+	EXCEPTION
+		WHEN SQLSTATE '42P01' THEN
+END;
+CREATE TABLE create_base_topology_log (osm_id varchar(255), duration interval);
+
+END;
+$func$
+LANGUAGE 'plpgsql' VOLATILE STRICT;
+
+
 CREATE OR REPLACE FUNCTION create_base_topology() RETURNS VOID AS
 $func$
 DECLARE
@@ -8,21 +29,10 @@ start_time timestamp;
 BEGIN
 t_current := 1;
 
-PERFORM DropTopology('admin_topo');
-PERFORM CreateTopology('admin_topo', 4326);
-PERFORM AddTopoGeometryColumn('admin_topo', 'public', 'all_geom', 'topo', 'MULTIPOLYGON');
-
 select count(*) INTO t_count FROM all_geom;
 
--- add internal logging table
-BEGIN
-	DROP TABLE create_base_topology_log;
-	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN
-END;
-CREATE TABLE create_base_topology_log (osm_id varchar(255), duration interval);
-
-FOR rec in SELECT * FROM all_geom order by osm_id ASC LOOP
+--FOR rec in SELECT * FROM all_geom order by osm_id ASC LOOP
+FOR rec in SELECT * FROM all_geom LOOP
 	BEGIN
 		start_time = clock_timestamp();
 		RAISE NOTICE 'Working on %/% - %', t_current, t_count, rec.osm_id;
@@ -40,6 +50,35 @@ END LOOP;
 END;
 $func$
 LANGUAGE 'plpgsql' VOLATILE STRICT;
+
+
+-- CREATE OR REPLACE FUNCTION create_base_topology_for_id(in_osm_id VARCHAR) RETURNS VOID AS
+-- $func$
+-- DECLARE
+-- start_time timestamp;
+-- a integer;
+-- BEGIN
+
+-- -- internal transaction
+-- BEGIN
+-- 	start_time = clock_timestamp();
+-- 	RAISE NOTICE 'Working on %', $1;
+-- 	PERFORM 1 FROM all_geom WHERE osm_id IN (all_geom a INNER JOIN all_geom b ON ST_intersects(a.wkb_geometry, b.wkb_geometry)
+-- 		INNER JOIN all_geom c ON ST_intersects(b.wkb_geometry, c.wkb_geometry) WHERE a.osm_id = $1) FOR UPDATE;
+-- 	UPDATE all_geom SET topo = toTopoGeom(wkb_geometry, 'admin_topo', (SELECT layer_id from topology.layer where feature_column = 'topo'))
+-- 	WHERE osm_id = $1;
+-- 	-- add info to the log table
+-- 	INSERT INTO create_base_topology_log VALUES ($1, clock_timestamp() - start_time);
+-- EXCEPTION
+-- 	WHEN OTHERS THEN
+-- 		RAISE WARNING 'Topology generation failed, removing feature % - %', $1, SQLERRM;
+-- 		RAISE EXCEPTION 'Topology generation failed, removing feature % - %', $1, SQLERRM;
+-- 		--DELETE FROM all_geom WHERE osm_id = $1;
+-- END;
+-- END;
+-- $func$
+-- LANGUAGE 'plpgsql' VOLATILE STRICT;
+
 
 
 CREATE OR REPLACE FUNCTION deconstruct_geometry(i_fill_holes BOOLEAN DEFAULT 't') RETURNS VOID AS
