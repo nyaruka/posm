@@ -4,24 +4,23 @@ LOG = logging.getLogger(__file__)
 
 import subprocess
 import os
+import sys
+
+from .utils import proc_exec
 
 
 class OSMmanagement():
 
-    def __init__(self):
-        self._readUpdateconfig()
-        self.osmFile = self.config.get('PLANET_OSM')
-        self.workDir = self.config.get('WORKING_DIRECTORY')
-
-    def _readUpdateconfig(self):
-        # read auto update settigns
-        with open('auto_update_osm.conf', 'r') as conf:
-            self.config = {
-                key: val.strip('"') for key, val in (
-                    line.split('=') for line in conf.read().split('\n')
-                    if line != ''
-                )
-            }
+    def __init__(self, settings, verbose=False):
+        self.settings = settings.get_settings()
+        self.verbose = verbose
+        self.osmFile = self.settings.get('sources').get('data_file')
+        self.workDir = self.settings.get('sources').get('data_directory')
+        self.dataURL = self.settings.get('sources').get('data_url')
+        self.polyFile = self.settings.get('sources').get('poly_file')
+        self.admin_levels_file = (
+            self.settings.get('sources').get('admin_levels_file')
+        )
 
     def downloadOSM(self):
 
@@ -30,23 +29,21 @@ class OSMmanagement():
 
         outputfile = '{}.pbf'.format(self.osmFile)
 
-        command = [
-            'wget', '-nv', '-S', '-c', self.config.get('DATA_URL'), '-O',
-            outputfile
-        ]
+        command = ['wget', '-nv', '-S', '-c', self.dataURL, '-O', outputfile]
         LOG.debug('Command: %s', ' '.join(command))
 
         proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             shell=False
         )
-        # execute the process ... .wait()
+
         LOG.info('Downloading OSM data file to %s', self.workDir)
-        msg = ''.join(proc.communicate())
+        msg = proc_exec(proc, self.verbose)
 
         if proc.returncode != 0:
             LOG.error('OSM data file download process has not exited cleanly!')
             LOG.error(msg)
+            sys.exit(99)
 
         if msg.find('HTTP/1.1 416 Requested Range Not Satisfiable') > 0:
             LOG.info(
@@ -58,6 +55,7 @@ class OSMmanagement():
             )
         else:
             LOG.error('Unknown response message', msg)
+            sys.exit(99)
 
         # revert to the old directory
         os.chdir(curDir)
@@ -73,27 +71,29 @@ class OSMmanagement():
         ]
         LOG.debug('Command: %s', ' '.join(command))
         proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             shell=False
         )
         # execute the process ... .wait()
         LOG.info('Converting OSM data file to %s', datafile)
-        msg = ''.join(proc.communicate())
+        msg = proc_exec(proc, self.verbose)
 
         if proc.returncode != 0:
             LOG.error('OSM PBF to O5M file conversion has not exited cleanly!')
             LOG.error(msg)
+            sys.exit(99)
 
         os.chdir(curDir)
 
-    def updateOSM(self, polyfile=None):
+    def updateOSM(self):
         curDir = os.getcwd()
-        polyfile_path = os.path.abspath(polyfile)
+        if self.polyFile:
+            polyfile_path = os.path.abspath(self.polyFile)
 
         os.chdir(self.workDir)
         datafile = '{}.o5m'.format(self.osmFile)
 
-        if polyfile:
+        if self.polyFile:
             command = [
                 './osmupdate', '-v', datafile, 'new.{}'.format(datafile),
                 '-B={}'.format(polyfile_path)
@@ -101,7 +101,7 @@ class OSMmanagement():
             LOG.debug('Command: %s', ' '.join(command))
 
             proc = subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 shell=False
             )
             LOG.info(
@@ -115,17 +115,17 @@ class OSMmanagement():
             LOG.debug('Command: %s', ' '.join(command))
 
             proc = subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 shell=False
             )
             LOG.info('Updating OSM data file %s ...', datafile)
 
-        # execute the process ... .wait()
-        msg = ''.join(proc.communicate())
+        msg = proc_exec(proc, self.verbose)
 
         if proc.returncode != 0:
             LOG.error('OSM update has not exited cleanly!')
             LOG.error(msg)
+            sys.exit(99)
 
         # rename updated file
         os.rename('new.{}'.format(datafile), datafile)
@@ -138,30 +138,31 @@ class OSMmanagement():
 
         command = [
             './osmfilter', '-v', datafile, '--keep=admin_level',
-            '-o=admin_levels.o5m'
+            '-o={}.o5m'.format(self.admin_levels_file)
         ]
         LOG.debug('Command: %s', ' '.join(command))
 
         proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             shell=False
         )
         LOG.info('Extracting "admin_levels" from OSM file %s ...', datafile)
 
         # execute the process ... .wait()
-        msg = ''.join(proc.communicate())
+        msg = proc_exec(proc, self.verbose)
 
         if proc.returncode != 0:
             LOG.error('OSM filter has not exited cleanly!')
             LOG.error(msg)
+            sys.exit(99)
 
         os.chdir(curDir)
 
-    def convertO5MtoPBF(self, filename):
+    def convertO5MtoPBF(self):
         curDir = os.getcwd()
         os.chdir(self.workDir)
-        datafile = '{}.o5m'.format(filename)
-        new_datafile = '{}.pbf'.format(filename)
+        datafile = '{}.o5m'.format(self.admin_levels_file)
+        new_datafile = '{}.pbf'.format(self.admin_levels_file)
 
         command = [
             './osmconvert', '-v', datafile, '-o={}'.format(new_datafile)
@@ -169,16 +170,17 @@ class OSMmanagement():
         LOG.debug('Command: %s', ' '.join(command))
 
         proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             shell=False
         )
         LOG.info('Converting %s to %s ...', datafile, new_datafile)
 
         # execute the process ... .wait()
-        msg = ''.join(proc.communicate())
+        msg = proc_exec(proc, self.verbose)
 
         if proc.returncode != 0:
             LOG.error('OSM convert has not exited cleanly!')
             LOG.error(msg)
+            sys.exit(99)
 
         os.chdir(curDir)

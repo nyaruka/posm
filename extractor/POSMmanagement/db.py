@@ -7,8 +7,9 @@ import psycopg2
 class DBManagement():
     extensions = ['postgis', 'postgis_topology']
 
-    def __init__(self, db_params):
-        self.db_params = db_params
+    def __init__(self, settings, verbose=False):
+        self.settings = settings.get_settings()
+        self.db_params = settings.db_params
 
     def dropDatabase(self):
         old_db = self.db_params.get('dbname')

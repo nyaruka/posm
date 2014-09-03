@@ -1,21 +1,33 @@
 import logging
 LOG = logging.getLogger(__file__)
 
+import os
+import sys
 import yaml
 
 
 class POSMSettings():
     settings = {}
 
-    def __init__(self, settingsFile):
+    def __init__(self, settingsFile, verbose):
         self.settingsFile = settingsFile
         self._readSettings()
+        self.verbose = verbose
 
     def _readSettings(self):
         LOG.debug('Reading settings from %s', self.settingsFile)
+        if not(
+                os.path.isfile(self.settingsFile) and
+                os.access(self.settingsFile, os.R_OK)):
+            LOG.error('File "%s" is not readable', self.settingsFile)
+            sys.exit(99)
+
         with open(self.settingsFile, 'r') as tmpfile:
             self.settings.update(yaml.load(tmpfile))
         self._decodeDBConnection()
+
+    def get_settings(self):
+        return self.settings
 
     def _decodeDBConnection(self):
         db_conn = self.settings.get('exposm').get('postgis')
