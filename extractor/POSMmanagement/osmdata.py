@@ -6,7 +6,7 @@ import subprocess
 import os
 import sys
 
-from .utils import proc_exec
+from .utils import proc_exec, is_file_readable
 
 
 class OSMmanagement():
@@ -89,6 +89,10 @@ class OSMmanagement():
         curDir = os.getcwd()
         if self.polyFile:
             polyfile_path = os.path.abspath(self.polyFile)
+
+            if not(is_file_readable(polyfile_path)):
+                LOG.error('File "%s" is not readable', polyfile_path)
+                sys.exit(99)
 
         os.chdir(self.workDir)
         datafile = '{}.o5m'.format(self.osmFile)

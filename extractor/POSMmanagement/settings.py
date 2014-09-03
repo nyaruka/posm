@@ -1,9 +1,10 @@
 import logging
 LOG = logging.getLogger(__file__)
 
-import os
 import sys
 import yaml
+
+from .utils import is_file_readable
 
 
 class POSMSettings():
@@ -16,9 +17,7 @@ class POSMSettings():
 
     def _readSettings(self):
         LOG.debug('Reading settings from %s', self.settingsFile)
-        if not(
-                os.path.isfile(self.settingsFile) and
-                os.access(self.settingsFile, os.R_OK)):
+        if not(is_file_readable(self.settingsFile)):
             LOG.error('File "%s" is not readable', self.settingsFile)
             sys.exit(99)
 
