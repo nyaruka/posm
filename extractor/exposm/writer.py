@@ -5,8 +5,6 @@ import sys
 import os.path
 from osgeo import ogr, osr
 
-from .settings import settings
-
 
 class FeatureWriter(object):
     """
@@ -14,7 +12,7 @@ class FeatureWriter(object):
     """
 
     @classmethod
-    def create_shp(cls, filename, *args, **kwargs):
+    def create_shp(cls, filename, settings, *args, **kwargs):
         """
         Stores data to a SHP file (on disk)
         """
@@ -31,7 +29,7 @@ class FeatureWriter(object):
         return shpWriter
 
     @classmethod
-    def create_postgis(cls, layer_name, *args, **kwargs):
+    def create_postgis(cls, layer_name, settings, *args, **kwargs):
         """
         Stores data to a POSTGIS database
         """

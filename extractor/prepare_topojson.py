@@ -2,30 +2,21 @@
 # -*- coding: utf-8 -*-
 import logging
 import logging.config
+LOG = logging.getLogger(__file__)
 
 import os
 import os.path
+import argparse
 
 import subprocess
 
 from osgeo import ogr, osr
 
-from exposm.settings import settings
-# setup logging, has to be after exposm.settings
-logging.config.dictConfig(settings.get('logging'))
-LOG = logging.getLogger(__file__)
+from POSMmanagement.settings import POSMSettings
 
 # define global SRS
 SRS = osr.SpatialReference()
 SRS.ImportFromEPSG(4326)
-
-database = settings.get('exposm').get('postgis')
-driver = ogr.GetDriverByName('PostgreSQL')
-datasource = ogr.Open(database)
-
-simple_ad0 = datasource.GetLayerByName('simple_admin_0_view')
-simple_ad1 = datasource.GetLayerByName('simple_admin_1_view')
-simple_ad2 = datasource.GetLayerByName('simple_admin_2_view')
 
 
 def create_GEOJSON(path):
@@ -83,79 +74,109 @@ def convert_to_topojson(path):
     if result:
         LOG.error('Cannot convert to topojson...')
 
-feature0 = simple_ad0.GetNextFeature()
-while feature0:
-    ad0_osm_id = feature0.GetField('osm_id')
 
-    ad0_dir = os.path.join(
-        settings.get('exposm').get('geojson_output_directory'),
-        ad0_osm_id
-    )
-    LOG.info('Creating ad0 directory: %s', ad0_dir)
-    os.mkdir(ad0_dir)
+def main(settings):
 
-    geojson_datasource_country = create_GEOJSON(ad0_dir)
+    database = settings.get('exposm').get('postgis')
+    datasource = ogr.Open(database)
 
-    simple_ad1.SetAttributeFilter(
-        'is_in_country=\'{}\''.format(ad0_osm_id)
-    )
-    feature1 = simple_ad1.GetNextFeature()
+    simple_ad0 = datasource.GetLayerByName('simple_admin_0_view')
+    simple_ad1 = datasource.GetLayerByName('simple_admin_1_view')
+    simple_ad2 = datasource.GetLayerByName('simple_admin_2_view')
 
-    while feature1:
-        ad1_osm_id = feature1.GetField('osm_id')
-        ad1_dir = os.path.join(
+    feature0 = simple_ad0.GetNextFeature()
+    while feature0:
+        ad0_osm_id = feature0.GetField('osm_id')
+
+        ad0_dir = os.path.join(
             settings.get('exposm').get('geojson_output_directory'),
-            ad0_osm_id, ad1_osm_id
+            ad0_osm_id
         )
+        LOG.info('Creating ad0 directory: %s', ad0_dir)
+        os.mkdir(ad0_dir)
 
-        LOG.info('Creating ad1 directory: %s', ad1_dir)
-        os.mkdir(ad1_dir)
+        geojson_datasource_country = create_GEOJSON(ad0_dir)
 
-        # create state level geojson
-        geojson_datasource_state = create_GEOJSON(ad1_dir)
-
-        simple_ad2.SetAttributeFilter(
-            'is_in_state=\'{}\''.format(ad1_osm_id)
+        simple_ad1.SetAttributeFilter(
+            'is_in_country=\'{}\''.format(ad0_osm_id)
         )
-        feature2 = simple_ad2.GetNextFeature()
-
-        while feature2:
-            ad2_osm_id = feature2.GetField('osm_id')
-            # write feature to the state.geojson
-            write_feature(
-                geojson_datasource_state,
-                [('osm_id', ad2_osm_id)],
-                feature2.GetGeomFieldRef(0)
-            )
-
-            # read next ad2 feature
-            feature2 = simple_ad2.GetNextFeature()
-
-        # write feature as a boundary to the state.geojson
-        write_feature(
-            geojson_datasource_state,
-            [('osm_id', ad1_osm_id), ('is_boundary', 1)],
-            feature1.GetGeomFieldRef(0)
-        )
-        # write feature to the country.geojson
-        write_feature(
-            geojson_datasource_country,
-            [('osm_id', ad1_osm_id)],
-            feature1.GetGeomFieldRef(0)
-        )
-        # write feature to the state.geojson
-        geojson_datasource_state = None
-        convert_to_topojson(ad1_dir)
-        # read next ad1 feature
         feature1 = simple_ad1.GetNextFeature()
 
-    # write feature as a boundary to the country.geojson
-    write_feature(
-        geojson_datasource_country,
-        [('osm_id', ad0_osm_id), ('is_boundary', 1)],
-        feature0.GetGeomFieldRef(0)
-    )
-    geojson_datasource_country = None
-    convert_to_topojson(ad0_dir)
-    # read next ad0 feature
-    feature0 = simple_ad0.GetNextFeature()
+        while feature1:
+            ad1_osm_id = feature1.GetField('osm_id')
+            ad1_dir = os.path.join(
+                settings.get('exposm').get('geojson_output_directory'),
+                ad0_osm_id, ad1_osm_id
+            )
+
+            LOG.info('Creating ad1 directory: %s', ad1_dir)
+            os.mkdir(ad1_dir)
+
+            # create state level geojson
+            geojson_datasource_state = create_GEOJSON(ad1_dir)
+
+            simple_ad2.SetAttributeFilter(
+                'is_in_state=\'{}\''.format(ad1_osm_id)
+            )
+            feature2 = simple_ad2.GetNextFeature()
+
+            while feature2:
+                ad2_osm_id = feature2.GetField('osm_id')
+                # write feature to the state.geojson
+                write_feature(
+                    geojson_datasource_state,
+                    [('osm_id', ad2_osm_id)],
+                    feature2.GetGeomFieldRef(0)
+                )
+
+                # read next ad2 feature
+                feature2 = simple_ad2.GetNextFeature()
+
+            # write feature as a boundary to the state.geojson
+            write_feature(
+                geojson_datasource_state,
+                [('osm_id', ad1_osm_id), ('is_boundary', 1)],
+                feature1.GetGeomFieldRef(0)
+            )
+            # write feature to the country.geojson
+            write_feature(
+                geojson_datasource_country,
+                [('osm_id', ad1_osm_id)],
+                feature1.GetGeomFieldRef(0)
+            )
+            # write feature to the state.geojson
+            geojson_datasource_state = None
+            convert_to_topojson(ad1_dir)
+            # read next ad1 feature
+            feature1 = simple_ad1.GetNextFeature()
+
+        # write feature as a boundary to the country.geojson
+        write_feature(
+            geojson_datasource_country,
+            [('osm_id', ad0_osm_id), ('is_boundary', 1)],
+            feature0.GetGeomFieldRef(0)
+        )
+        geojson_datasource_country = None
+        convert_to_topojson(ad0_dir)
+        # read next ad0 feature
+        feature0 = simple_ad0.GetNextFeature()
+
+
+parser = argparse.ArgumentParser(description='Extract admin levels')
+
+parser.add_argument(
+    '--settings', default='settings.yaml',
+    help='path to the settings file, default: settings.yaml'
+)
+
+
+if __name__ == '__main__':
+    # parse the args, and call default function
+    args = parser.parse_args()
+    proj_settings = POSMSettings(args.settings)
+
+    settings = proj_settings.get_settings()
+
+    logging.config.dictConfig(settings.get('logging'))
+
+    main(settings=settings)

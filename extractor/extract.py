@@ -2,17 +2,17 @@
 # -*- coding: utf-8 -*-
 import logging
 import logging.config
+LOG = logging.getLogger(__file__)
+
+import argparse
 
 import rtree
 import shapely.wkb
 from shapely.prepared import prep
 
-from exposm.settings import settings, admin_levels
+from POSMmanagement.settings import POSMSettings
 
 # setup logging, has to be after osmext.settings
-logging.config.dictConfig(settings.get('logging'))
-LOG = logging.getLogger(__file__)
-
 from exposm.writer import AdminLevelWriter
 from exposm.reader import AdminLevelReader
 from exposm.utils import check_bad_geom, intersect_geom, prepare_osm_id
@@ -55,7 +55,7 @@ def write_admin_check_files(admin_0, admin_1, admin_2):
     save_file('admin_2_new.txt', adm_2_new)
 
 
-def main():
+def main(settings, admin_levels):
 
     adm_0_temp = set()
     adm_1_temp = set()
@@ -67,7 +67,7 @@ def main():
     # extract countries
     admin_level_0 = {}
 
-    lyr_save = AdminLevelWriter.create_postgis('admin_level_0')
+    lyr_save = AdminLevelWriter.create_postgis('admin_level_0', settings)
     lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 
     feature_id = 0
@@ -141,7 +141,7 @@ def main():
 
     feature_id = 0
 
-    lyr_save = AdminLevelWriter.create_postgis('admin_level_1')
+    lyr_save = AdminLevelWriter.create_postgis('admin_level_1', settings)
     lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 
     for layer, feature in lyr_read.readData():
@@ -225,7 +225,7 @@ def main():
     lyr_save.datasource = None
 
     # extract counties
-    lyr_save = AdminLevelWriter.create_postgis('admin_level_2')
+    lyr_save = AdminLevelWriter.create_postgis('admin_level_2', settings)
     lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 
     for layer, feature in lyr_read.readData():
@@ -306,5 +306,21 @@ def main():
     write_admin_check_files(adm_0_temp, adm_1_temp, adm_2_temp)
 
 
+parser = argparse.ArgumentParser(description='Extract admin levels')
+
+parser.add_argument(
+    '--settings', default='settings.yaml',
+    help='path to the settings file, default: settings.yaml'
+)
+
 if __name__ == '__main__':
-    main()
+    # parse the args, and call default function
+    args = parser.parse_args()
+    proj_settings = POSMSettings(args.settings)
+
+    settings = proj_settings.get_settings()
+    admin_levels = proj_settings.get_admin_levels()
+
+    logging.config.dictConfig(settings.get('logging'))
+
+    main(settings=settings, admin_levels=admin_levels)

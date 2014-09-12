@@ -3,31 +3,31 @@
 import logging
 import logging.config
 
-from exposm.settings import settings
-
-# setup logging, has to be after osmext.settings
-logging.config.dictConfig(settings.get('logging'))
 LOG = logging.getLogger(__file__)
+
+import argparse
 
 from exposm.writer import AdminLevelWriter, DiscardFeatureWriter
 from exposm.reader import AdminLevelReader
-from exposm.utils import osm_id_exists, check_bad_geom
+from exposm.utils import check_bad_geom, prepare_osm_id
+
+from POSMmanagement.settings import POSMSettings
 
 
-def main():
+def main(settings):
 
-    lyr_discard = DiscardFeatureWriter.create_shp('discarded')
+    lyr_discard = DiscardFeatureWriter.create_shp('discarded', settings)
 
-    lyr_save1 = AdminLevelWriter.create_shp('admin_level_1')
-    lyr_save2 = AdminLevelWriter.create_shp('admin_level_2')
-    lyr_save3 = AdminLevelWriter.create_shp('admin_level_3')
-    lyr_save4 = AdminLevelWriter.create_shp('admin_level_4')
-    lyr_save5 = AdminLevelWriter.create_shp('admin_level_5')
-    lyr_save6 = AdminLevelWriter.create_shp('admin_level_6')
-    lyr_save7 = AdminLevelWriter.create_shp('admin_level_7')
-    lyr_save8 = AdminLevelWriter.create_shp('admin_level_8')
-    lyr_save9 = AdminLevelWriter.create_shp('admin_level_9')
-    lyr_save10 = AdminLevelWriter.create_shp('admin_level_10')
+    lyr_save1 = AdminLevelWriter.create_shp('admin_level_1', settings)
+    lyr_save2 = AdminLevelWriter.create_shp('admin_level_2', settings)
+    lyr_save3 = AdminLevelWriter.create_shp('admin_level_3', settings)
+    lyr_save4 = AdminLevelWriter.create_shp('admin_level_4', settings)
+    lyr_save5 = AdminLevelWriter.create_shp('admin_level_5', settings)
+    lyr_save6 = AdminLevelWriter.create_shp('admin_level_6', settings)
+    lyr_save7 = AdminLevelWriter.create_shp('admin_level_7', settings)
+    lyr_save8 = AdminLevelWriter.create_shp('admin_level_8', settings)
+    lyr_save9 = AdminLevelWriter.create_shp('admin_level_9', settings)
+    lyr_save10 = AdminLevelWriter.create_shp('admin_level_10', settings)
 
     lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
 
@@ -58,7 +58,8 @@ def main():
             continue
 
         # osm_id is crucial for establishing feature relationship
-        if not(osm_id_exists(osm_id, name)):
+        osm_id = prepare_osm_id(feature, layer)
+        if not osm_id:
             LOG.warning('Feature without OSM_ID, discarding... "%s"', name)
             feature_data = [
                 ('osm_id', osm_id),
@@ -122,5 +123,22 @@ def main():
     lyr_save10.datasource = None
     lyr_discard.datasource = None
 
+
+parser = argparse.ArgumentParser(description='Extract admin levels')
+
+parser.add_argument(
+    '--settings', default='settings.yaml',
+    help='path to the settings file, default: settings.yaml'
+)
+
+
 if __name__ == '__main__':
-    main()
+    # parse the args, and call default function
+    args = parser.parse_args()
+    proj_settings = POSMSettings(args.settings)
+
+    settings = proj_settings.get_settings()
+
+    logging.config.dictConfig(settings.get('logging'))
+
+    main(settings=settings)

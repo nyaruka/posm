@@ -1,14 +1,10 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
 import logging
+LOG = logging.getLogger(__file__)
 import logging.config
 
 import argparse
-
-from exposm.settings import settings
-# setup logging, has to be after osmext.settings
-logging.config.dictConfig(settings.get('logging'))
-LOG = logging.getLogger(__file__)
 
 from POSMmanagement.db import DBManagement
 from POSMmanagement.settings import POSMSettings
@@ -25,11 +21,11 @@ def run_all(args):
     osm_man.extractAdminLevels()
     osm_man.convertO5MtoPBF()
     ext_sim = ProcessManagement(proj_settings, verbose=args.verbose)
-    ext_sim.processAdminLevels()
+    ext_sim.processAdminLevels(args.settings)
     ext_sim.deconstructGeometry()
     ext_sim.createBaseTopology()
     ext_sim.simplifyAdminLevels(args.tolerance)
-    ext_sim.convertToGeoJson()
+    ext_sim.convertToGeoJson(args.settings)
 
 
 def download_OSM(args):
@@ -86,6 +82,14 @@ parser.add_argument(
 )
 
 
-# parse the args, and call default function
-args = parser.parse_args()
-args.func(args)
+if __name__ == '__main__':
+    # parse the args, and call default function
+    args = parser.parse_args()
+
+    proj_settings = POSMSettings(args.settings, verbose=args.verbose)
+    settings = proj_settings.get_settings()
+
+    # setup logging, has to be after osmext.settings
+    logging.config.dictConfig(settings.get('logging'))
+
+    args.func(args)

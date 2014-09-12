@@ -2,5 +2,4 @@ GDAL
 PyYAML
 Shapely
 Rtree
-urwid
 psycopg2

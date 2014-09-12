@@ -3,14 +3,16 @@ LOG = logging.getLogger(__file__)
 
 import sys
 import yaml
+import gdal
 
 from .utils import is_file_readable
 
 
 class POSMSettings():
     settings = {}
+    admin_levels = {}
 
-    def __init__(self, settingsFile, verbose):
+    def __init__(self, settingsFile, verbose=False):
         self.settingsFile = settingsFile
         self._readSettings()
         self.verbose = verbose
@@ -24,9 +26,55 @@ class POSMSettings():
         with open(self.settingsFile, 'r') as tmpfile:
             self.settings.update(yaml.load(tmpfile))
         self._decodeDBConnection()
+        self._readAdminLevels()
+        self._setupGDAL()
 
     def get_settings(self):
         return self.settings
+
+    def get_admin_levels(self):
+        return self.admin_levels
+
+    def _readAdminLevels(self):
+        admin_levels_file = open('admin_mapping.yaml', 'rb')
+        self.admin_levels.update(yaml.load(admin_levels_file))
+
+    def _setupGDAL(self):
+        # required for OSM data format
+        gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'YES')
+        # set 'OSM_CONFIG_fILE'
+        gdal.SetConfigOption(
+            'OSM_CONFIG_FILE',
+            self.settings.get('sources').get('osm_config_file')
+        )
+
+        # large datasets require a lot of disk space, set temporary directory
+        # with enough free space
+        gdal.SetConfigOption(
+            'CPL_TMPDIR', self.settings.get('gdal').get('tempfile_dir')
+        )
+
+        # fine tune memory allocation for tmp data, 4Gb should be enough for
+        # current admin_level extract
+        gdal.SetConfigOption(
+            'OSM_MAX_TMPFILE_SIZE',
+            self.settings.get('gdal').get('memory_limit')
+        )
+
+        # setup logging options
+        gdal.SetConfigOption('CPL_TIMESTAMP', 'ON')
+        gdal.PushErrorHandler('CPLLoggingErrorHandler')
+        gdal.SetConfigOption("CPL_LOG_ERRORS", 'ON')
+        gdal.SetConfigOption(
+            'CPL_DEBUG', self.settings.get('gdal').get('debug')
+        )
+        gdal.SetConfigOption(
+            'CPL_LOG', self.settings.get('gdal').get('debug_file')
+        )
+
+        # postgresql driver specific settings
+
+        gdal.SetConfigOption('PG_USE_COPY', 'YES')
 
     def _decodeDBConnection(self):
         db_conn = self.settings.get('exposm').get('postgis')

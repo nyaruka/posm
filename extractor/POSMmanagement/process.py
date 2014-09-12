@@ -16,9 +16,9 @@ class ProcessManagement():
         self.settings = settings.get_settings()
         self.db_params = settings.db_params
 
-    def processAdminLevels(self):
+    def processAdminLevels(self, settings_file):
         command = [
-            'python', 'extract.py'
+            'python', 'extract.py', '--settings', settings_file
         ]
         LOG.debug('Command: %s', ' '.join(command))
 
@@ -107,13 +107,17 @@ class ProcessManagement():
         cur.close()
         conn.close()
 
-    def convertToGeoJson(self, *args):
+    def convertToGeoJson(self, settings_file, *args):
         if len(args) > 0:
-            command = ['python', 'generate_geojson.py', '--rm']
+            command = [
+                'python', 'generate_geojson.py', '--rm', '--settings',
+                settings_file
+            ]
             command += [arg for arg in args]
         else:
             command = [
-                'python', 'generate_geojson.py', '--rm', '--all'
+                'python', 'generate_geojson.py', '--rm', '--all', '--settings',
+                settings_file
             ]
 
         LOG.debug('Command: %s', ' '.join(command))
