@@ -33,7 +33,7 @@ class OSMmanagement():
         LOG.debug('Command: %s', ' '.join(command))
 
         proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             shell=False
         )
 
@@ -71,7 +71,7 @@ class OSMmanagement():
         ]
         LOG.debug('Command: %s', ' '.join(command))
         proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             shell=False
         )
         # execute the process ... .wait()
@@ -105,7 +105,7 @@ class OSMmanagement():
             LOG.debug('Command: %s', ' '.join(command))
 
             proc = subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 shell=False
             )
             LOG.info(
@@ -119,7 +119,7 @@ class OSMmanagement():
             LOG.debug('Command: %s', ' '.join(command))
 
             proc = subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 shell=False
             )
             LOG.info('Updating OSM data file %s ...', datafile)
@@ -147,7 +147,7 @@ class OSMmanagement():
         LOG.debug('Command: %s', ' '.join(command))
 
         proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             shell=False
         )
         LOG.info('Extracting "admin_levels" from OSM file %s ...', datafile)
@@ -174,7 +174,7 @@ class OSMmanagement():
         LOG.debug('Command: %s', ' '.join(command))
 
         proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             shell=False
         )
         LOG.info('Converting %s to %s ...', datafile, new_datafile)

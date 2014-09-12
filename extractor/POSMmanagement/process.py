@@ -23,7 +23,7 @@ class ProcessManagement():
         LOG.debug('Command: %s', ' '.join(command))
 
         proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             shell=False
         )
         # execute the process ... .wait()
@@ -118,7 +118,7 @@ class ProcessManagement():
 
         LOG.debug('Command: %s', ' '.join(command))
         proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             shell=False
         )
         # execute the process ... .wait()
