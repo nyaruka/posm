@@ -54,7 +54,10 @@ parser_run_all = subparsers.add_parser(
 )
 parser_run_all.add_argument(
     '--tolerance', type=float, default=0.001,
-    help='Tolerance parameter for DouglasPeucker simplification algorithm'
+    help=(
+        'Tolerance parameter for DouglasPeucker simplification algorithm '
+        '(default: 0.001)'
+    )
 )
 parser_run_all.set_defaults(func=run_all)
 
