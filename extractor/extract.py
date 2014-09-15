@@ -5,12 +5,15 @@ import logging.config
 LOG = logging.getLogger(__file__)
 
 import argparse
+import os
+import sys
 
 import rtree
 import shapely.wkb
 from shapely.prepared import prep
 
 from POSMmanagement.settings import POSMSettings
+from POSMmanagement.utils import is_file_readable
 
 # setup logging, has to be after osmext.settings
 from exposm.writer import AdminLevelWriter
@@ -68,7 +71,14 @@ def main(settings, admin_levels):
     admin_level_0 = {}
 
     lyr_save = AdminLevelWriter.create_postgis('admin_level_0', settings)
-    lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
+    admin_level_data_path = os.path.join(
+        settings.get('sources').get('data_directory'),
+        '{}.pbf'.format(settings.get('sources').get('osm_data_file'))
+    )
+    if not(is_file_readable(admin_level_data_path)):
+        sys.exit(99)
+
+    lyr_read = AdminLevelReader(admin_level_data_path)
 
     feature_id = 0
 
@@ -142,7 +152,7 @@ def main(settings, admin_levels):
     feature_id = 0
 
     lyr_save = AdminLevelWriter.create_postgis('admin_level_1', settings)
-    lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
+    lyr_read = AdminLevelReader(admin_level_data_path)
 
     for layer, feature in lyr_read.readData():
         osm_id = prepare_osm_id(feature, layer)
@@ -226,7 +236,7 @@ def main(settings, admin_levels):
 
     # extract counties
     lyr_save = AdminLevelWriter.create_postgis('admin_level_2', settings)
-    lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
+    lyr_read = AdminLevelReader(admin_level_data_path)
 
     for layer, feature in lyr_read.readData():
 
