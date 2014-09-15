@@ -81,6 +81,18 @@ def proc_exec(proc, verbose):
     return msg
 
 
+def is_directory_writable(path):
+    if os.path.isdir(path):
+        if os.access(path, os.W_OK):
+            return True
+        else:
+            LOG.error('Missing write permission: %s', path)
+    else:
+        LOG.error('Directory not found: %s', path)
+
+    return False
+
+
 def is_file_readable(path):
     if os.path.isfile(path):
         if os.access(path, os.R_OK):
@@ -89,4 +101,5 @@ def is_file_readable(path):
             LOG.error('Missing read permission: %s', path)
     else:
         LOG.error('File not found: %s', path)
-        return False
+
+    return False

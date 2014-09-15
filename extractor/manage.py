@@ -10,6 +10,7 @@ from POSMmanagement.db import DBManagement
 from POSMmanagement.settings import POSMSettings
 from POSMmanagement.osmdata import OSMmanagement
 from POSMmanagement.process import ProcessManagement
+from POSMmanagement.project import ProjectManagement
 
 
 def run_all(args):
@@ -41,6 +42,18 @@ def create_DB(args):
     db_man.createDatabase()
 
 
+def init_dir(args):
+    proj_settings = POSMSettings(args.settings, verbose=args.verbose)
+    proj_man = ProjectManagement(proj_settings, verbose=args.verbose)
+    proj_man.initDirectory()
+
+
+def cut_data(args):
+    proj_settings = POSMSettings(args.settings, verbose=args.verbose)
+    proj_man = ProjectManagement(proj_settings, verbose=args.verbose)
+    proj_man.cutExtract(args.planetOSM)
+
+
 # add
 parser = argparse.ArgumentParser(description='Manage common POSM tasks')
 subparsers = parser.add_subparsers(title='Tasks')
@@ -64,11 +77,28 @@ parser_download_OSM = subparsers.add_parser(
 )
 parser_download_OSM.set_defaults(func=download_OSM)
 
+
 parser_create_DB = subparsers.add_parser(
     'create_DB',
     help='creates new PostGIS database and load functions'
 )
 parser_create_DB.set_defaults(func=create_DB)
+
+
+parser_init_dir = subparsers.add_parser(
+    'init_dir', help='initializes empty data directory'
+)
+
+parser_init_dir.set_defaults(func=init_dir)
+
+
+parser_cut_data = subparsers.add_parser(
+    'cut_data', help='cuts OSM data from the planet osm file'
+)
+parser_cut_data.add_argument(
+    'planetOSM', help='Full path of the planetOSM file in O5M format'
+)
+parser_cut_data.set_defaults(func=cut_data)
 
 
 parser.add_argument(
