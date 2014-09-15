@@ -22,7 +22,7 @@ class ProjectManagement():
     def cutExtract(self, planet_osm):
         curDir = os.getcwd()
 
-        osm_originPath = os.path.abspath(planet_osm)
+        osm_originPath = os.path.normpath(os.path.abspath(planet_osm))
         if not(is_file_readable(osm_originPath)):
             LOG.error('File "%s" is not readable', osm_originPath)
             sys.exit(99)
@@ -36,9 +36,21 @@ class ProjectManagement():
 
         os.chdir(self.workDir)
 
+        osm_file_path = os.path.normpath(
+            os.path.join(self.workDir, '{}.o5m'.format(self.osmFile))
+        )
+        print osm_file_path, osm_originPath
+        if (os.path.exists(osm_file_path) and
+                os.path.samefile(osm_file_path, osm_originPath)):
+            LOG.error((
+                'Planet.osm file and destination file can\'t be the same file:'
+                ' %s = %s'
+            ), osm_originPath, osm_file_path)
+            sys.exit(99)
+
         command = [
             './osmconvert', '-v', osm_originPath,
-            '-B={}'.format(polyfile_path), '-o={}.o5m'.format(self.osmFile)
+            '-B={}'.format(polyfile_path), '-o={}'.format(osm_file_path)
         ]
         LOG.debug('Command: %s', ' '.join(command))
 
