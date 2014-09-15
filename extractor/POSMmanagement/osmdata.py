@@ -16,20 +16,19 @@ class OSMmanagement():
         self.verbose = verbose
         self.osmFile = self.settings.get('sources').get('data_file')
         self.workDir = self.settings.get('sources').get('data_directory')
-        self.dataURL = self.settings.get('sources').get('data_url')
         self.polyFile = self.settings.get('sources').get('poly_file')
         self.admin_levels_file = (
             self.settings.get('sources').get('admin_levels_file')
         )
 
-    def downloadOSM(self):
+    def downloadOSM(self, data_url):
 
         curDir = os.getcwd()
         os.chdir(self.workDir)
 
         outputfile = '{}.pbf'.format(self.osmFile)
 
-        command = ['wget', '-nv', '-S', '-c', self.dataURL, '-O', outputfile]
+        command = ['wget', '-nv', '-S', '-c', data_url, '-O', outputfile]
         LOG.debug('Command: %s', ' '.join(command))
 
         proc = subprocess.Popen(

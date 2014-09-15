@@ -32,7 +32,7 @@ def run_all(args):
 def download_OSM(args):
     proj_settings = POSMSettings(args.settings, verbose=args.verbose)
     osm_man = OSMmanagement(proj_settings, verbose=args.verbose)
-    osm_man.downloadOSM()
+    osm_man.downloadOSM(args.data_url)
     osm_man.convertOSMtoO5M()
 
 
@@ -73,8 +73,10 @@ parser_run_all.set_defaults(func=run_all)
 
 parser_download_OSM = subparsers.add_parser(
     'download_OSM',
-    help='downloads OSM data from DATA_URL specified in the config file'
+    help='downloads OSM data'
 )
+parser_download_OSM.add_argument('data_url', help='OSM data http URI')
+
 parser_download_OSM.set_defaults(func=download_OSM)
 
 
