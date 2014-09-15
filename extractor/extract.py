@@ -12,6 +12,9 @@ import rtree
 import shapely.wkb
 from shapely.prepared import prep
 
+import osr
+import ogr
+
 from POSMmanagement.settings import POSMSettings
 from POSMmanagement.utils import is_file_readable
 
@@ -58,7 +61,87 @@ def write_admin_check_files(admin_0, admin_1, admin_2):
     save_file('admin_2_new.txt', adm_2_new)
 
 
-def main(settings, admin_levels):
+def create_GEOJSON(path, filename):
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+
+    abspath = os.path.join(path, filename)
+    # remove file if it exists, GDAL can't overwrite exiting geojson files
+    if os.path.isfile(abspath):
+        os.unlink(abspath)
+
+    # geoJSON datasource
+    GEOJSON_driver = ogr.GetDriverByName('GEOJson')
+    GEOJSON_datasource = GEOJSON_driver.CreateDataSource(abspath)
+
+    layer = GEOJSON_datasource.CreateLayer(
+        'boundary', srs, ogr.wkbPoint
+    )
+
+    # define fields
+    osm_id_def = ogr.FieldDefn('osm_id', ogr.OFTString)
+    osm_id_def.SetWidth(254)
+    reason_def = ogr.FieldDefn('reason', ogr.OFTString)
+    reason_def.SetWidth(254)
+    link_def = ogr.FieldDefn('link', ogr.OFTString)
+    link_def.SetWidth(254)
+
+    layer.CreateField(osm_id_def)
+    layer.CreateField(reason_def)
+    layer.CreateField(link_def)
+
+    return GEOJSON_datasource
+
+
+def parseReason(reason):
+    if reason.startswith('Self-intersection'):
+        return [float(coord) for coord in reason[18:-1].split(' ')]
+    elif reason.startswith('BONKERS!'):
+        return (0, 0)
+    else:
+        return (-1000, -1000)
+
+
+def genProblemLink(osm_id):
+    if osm_id[0] == 'N':
+        return 'http://www.openstreetmap.org/node/{}'.format(osm_id[1:])
+    elif osm_id[0] == 'W':
+        return 'http://www.openstreetmap.org/way/{}'.format(osm_id[1:])
+    elif osm_id[0] == 'R':
+        return 'http://www.openstreetmap.org/relation/{}'.format(osm_id[1:])
+    else:
+        return 'Unknown feature type for osm_id: {}'.format(osm_id)
+
+
+def writeProblem(datasource, osm_id, reason):
+        layer = datasource.GetLayer(0)
+
+        new_feat = ogr.Feature(layer.GetLayerDefn())
+        new_feat.SetField('osm_id', osm_id)
+
+        new_feat.SetField('reason', reason)
+
+        coordinates = parseReason(reason)
+
+        problem_link = genProblemLink(osm_id)
+        if coordinates != (0, 0):
+            problem_link = '{}#map=18/{}/{}'.format(
+                problem_link, coordinates[1], coordinates[0]
+            )
+        new_feat.SetField('link', problem_link)
+        # set geometry for the feature
+        new_geom = ogr.Geometry(ogr.wkbPoint)
+        new_geom.AddPoint(*coordinates)
+
+        new_feat.SetGeometry(new_geom)
+        # add feature to the layer
+        layer.CreateFeature(new_feat)
+
+
+def main(settings, admin_levels, problems_geojson):
+
+    if problems_geojson:
+        problems_datasource = create_GEOJSON('', 'problems.geojson')
 
     adm_0_temp = set()
     adm_1_temp = set()
@@ -104,6 +187,8 @@ def main(settings, admin_levels):
             # add bad geom to the list
             unusable_features.add(osm_id)
             # skip further processing
+            if problems_geojson:
+                writeProblem(problems_datasource, osm_id, bad_geom)
             continue
 
         if feature.GetField('boundary') != 'administrative':
@@ -143,6 +228,10 @@ def main(settings, admin_levels):
 
     lyr_read.datasource = None
     lyr_save.datasource = None
+
+    # write geojson problems file
+    if problems_geojson:
+        problems_datasource = None
 
     # extract states
     admin_level_1 = {}
@@ -323,6 +412,11 @@ parser.add_argument(
     help='path to the settings file, default: settings.yaml'
 )
 
+parser.add_argument(
+    '--problems_as_geojson', action='store_true', default=False,
+    help='Generate problems.geojson in the current directory'
+)
+
 if __name__ == '__main__':
     # parse the args, and call default function
     args = parser.parse_args()
@@ -333,4 +427,7 @@ if __name__ == '__main__':
 
     logging.config.dictConfig(settings.get('logging'))
 
-    main(settings=settings, admin_levels=admin_levels)
+    main(
+        settings=settings, admin_levels=admin_levels,
+        problems_geojson=args.problems_as_geojson
+    )

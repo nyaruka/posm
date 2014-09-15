@@ -19,7 +19,8 @@ class ProcessManagement():
 
     def processAdminLevels(self, settings_file):
         command = [
-            'python', 'extract.py', '--settings', settings_file
+            'python', 'extract.py', '--settings', settings_file,
+            '--problems_as_geojson'
         ]
         LOG.debug('Command: %s', ' '.join(command))
 
