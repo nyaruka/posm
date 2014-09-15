@@ -6,12 +6,15 @@ import logging.config
 LOG = logging.getLogger(__file__)
 
 import argparse
+import os
+import sys
 
 from exposm.writer import AdminLevelWriter, DiscardFeatureWriter
 from exposm.reader import AdminLevelReader
 from exposm.utils import check_bad_geom, prepare_osm_id
 
 from POSMmanagement.settings import POSMSettings
+from POSMmanagement.utils import is_file_readable
 
 
 def main(settings):
@@ -29,7 +32,14 @@ def main(settings):
     lyr_save9 = AdminLevelWriter.create_shp('admin_level_9', settings)
     lyr_save10 = AdminLevelWriter.create_shp('admin_level_10', settings)
 
-    lyr_read = AdminLevelReader(settings.get('sources').get('osm_data_file'))
+    admin_level_data_path = os.path.join(
+        settings.get('sources').get('data_directory'),
+        '{}.pbf'.format(settings.get('sources').get('admin_levels_file'))
+    )
+    if not(is_file_readable(admin_level_data_path)):
+        sys.exit(99)
+
+    lyr_read = AdminLevelReader(admin_level_data_path)
 
     LOG.info('Started exporting admin_level_0 boundaries!')
 

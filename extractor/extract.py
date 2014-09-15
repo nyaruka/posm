@@ -73,7 +73,7 @@ def main(settings, admin_levels):
     lyr_save = AdminLevelWriter.create_postgis('admin_level_0', settings)
     admin_level_data_path = os.path.join(
         settings.get('sources').get('data_directory'),
-        '{}.pbf'.format(settings.get('sources').get('osm_data_file'))
+        '{}.pbf'.format(settings.get('sources').get('admin_levels_file'))
     )
     if not(is_file_readable(admin_level_data_path)):
         sys.exit(99)

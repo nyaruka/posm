@@ -5,6 +5,7 @@ LOG = logging.getLogger(__file__)
 import subprocess
 import psycopg2
 import sys
+import os
 
 from .utils import proc_exec
 
@@ -27,9 +28,15 @@ class ProcessManagement():
             shell=False
         )
         # execute the process ... .wait()
+        admin_level_data_path = os.path.join(
+            self.settings.get('sources').get('data_directory'),
+            '{}.pbf'.format(
+                self.settings.get('sources').get('admin_levels_file')
+            )
+        )
+
         LOG.info(
-            'Processing admin levels %s',
-            self.settings.get('sources').get('osm_data_file')
+            'Processing admin levels %s', admin_level_data_path
         )
         msg = proc_exec(proc, self.verbose)
 
