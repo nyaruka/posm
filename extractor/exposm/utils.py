@@ -138,8 +138,10 @@ def writeProblem(datasource, osm_id, reason):
 
         problem_link = genProblemLink(osm_id)
         if coordinates != (0, 0):
-            problem_link = '{}#map=18/{}/{}'.format(
-                problem_link, coordinates[1], coordinates[0]
+            problem_link = (
+                '{link}?mlat={lat}&mlon={lon}#map=18/{lat}/{lon}'.format(
+                    link=problem_link, lat=coordinates[1], lon=coordinates[0]
+                )
             )
         new_feat.SetField('link', problem_link)
         # set geometry for the feature
