@@ -99,7 +99,10 @@ CREATE TABLE all_geom (osm_id varchar(255), is_in_state varchar(255), is_in_coun
   FOR rec in SELECT * FROM admin_level_1 order by osm_id ASC LOOP
 	RAISE NOTICE 'admin_level_1, %', rec.osm_id;
 	BEGIN
-		select st_multi(st_difference(a.wkb_geometry, (select st_union(b.wkb_geometry) from admin_level_2 b WHERE b.is_in = rec.osm_id))) INTO t_geom from admin_level_1 a where a.osm_id=rec.osm_id;
+		select st_multi(st_difference(a.wkb_geometry, (
+			select st_union(b.wkb_geometry) from admin_level_2 b
+			WHERE b.is_in = rec.osm_id)))
+		INTO t_geom from admin_level_1 a where a.osm_id=rec.osm_id;
 	EXCEPTION
 		WHEN OTHERS THEN
 			RAISE WARNING 'Cannot calculate geometry difference, skipping ...  %', SQLERRM;
@@ -256,12 +259,16 @@ q1:=$$create table simple_admin_0 as
 select is_in_country as osm_id, st_buildarea(st_union(wkb_geometry)) as wkb_geometry
 from simple_admin_all$$;
 
+q2:=$$select osm_id, wkb_geometry
+from simple_admin_all
+where is_in_country is null and is_in_state is null and left(osm_id,3)!= 'xxx'$$;
+
 IF array_length(i_osmid_list,1) > 0 THEN
 	condition:= ' WHERE is_in_country = ANY($1)';
 	q1:=q1||condition||$$ group by is_in_country$$;
 	EXECuTE q1 USING i_osmid_list;
 ELSE
-	q1:=q1||$$ group by is_in_country$$;
+	q1:=q1||$$ group by is_in_country UNION $$||q2;
 	EXECUTE q1;
 END IF;
 
