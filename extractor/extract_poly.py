@@ -17,6 +17,9 @@ import shapely.geometry
 import argparse
 
 from POSMmanagement.settings import POSMSettings
+from POSMmanagement.utils import is_file_readable
+from exposm.reader import AdminLevelReader
+from exposm.utils import prepare_osm_id, check_bad_geom
 
 
 def create_GEOJSON(path, filename):
@@ -67,11 +70,13 @@ def checkGeom(geom, buf_geom, sim_geom, bufferDistance, simplifyDistance):
 
 
 def createPolys(
-        feature, abspath, bufferDistance, simplifyDistance, geojson):
-    feat_id = feature.GetField('osm_id')
-    feat_iso = feature.GetField('iso3166')
+        feature, abspath, bufferDistance, simplifyDistance, geojson, osm_id):
+    feat_iso = feature.GetField('ISO3166-1')
 
-    polyName = '{}_{}'.format(feat_iso, feat_id)
+    if not(feat_iso):
+        return None
+
+    polyName = '{}_{}'.format(feat_iso, osm_id)
     polyFilename = '{}.poly'.format(polyName)
     full_path = os.path.join(abspath, polyFilename)
     LOG.info('Creating %s ...', full_path)
@@ -140,7 +145,7 @@ def createPolys(
         layer = geojson_poly.GetLayer(0)
 
         new_feat = ogr.Feature(layer.GetLayerDefn())
-        new_feat.SetField('osm_id', feat_id)
+        new_feat.SetField('osm_id', osm_id)
 
         # set geometry for the feature
         new_feat.SetGeometry(ogr.CreateGeometryFromWkb(fin_geom.wkb))
@@ -152,13 +157,6 @@ def createPolys(
 
 
 def main(settings, directory, bufferDistance, simplifyDistance, geojson):
-    database = settings.get('exposm').get('postgis')
-    datasource = ogr.Open(database)
-
-    ad0_feature = datasource.GetLayerByName('admin_level_0')
-
-    feature = ad0_feature.GetNextFeature()
-
     abspath = os.path.abspath(directory)
 
     if os.path.isdir(abspath):
@@ -169,11 +167,42 @@ def main(settings, directory, bufferDistance, simplifyDistance, geojson):
         LOG.error('Directory not found: %s', abspath)
         sys.exit(99)
 
-    while feature:
-        createPolys(
-            feature, abspath, bufferDistance, simplifyDistance, geojson
-        )
-        feature = ad0_feature.GetNextFeature()
+    admin_level_data_path = os.path.join(
+        settings.get('sources').get('data_directory'),
+        '{}.pbf'.format(settings.get('sources').get('admin_levels_file'))
+    )
+    if not(is_file_readable(admin_level_data_path)):
+        sys.exit(99)
+
+    lyr_read = AdminLevelReader(admin_level_data_path)
+
+    for layer, feature in lyr_read.readData():
+        # get data
+        osm_id = prepare_osm_id(feature, layer)
+        if not osm_id:
+            continue
+
+        admin_level = feature.GetField('admin_level')
+
+        geom_raw = feature.GetGeometryRef()
+
+        bad_geom = check_bad_geom(geom_raw, osm_id)
+        # BONKERS features usually crash QGIS, we need to skip those
+
+        if bad_geom:
+            # skip further processing
+            continue
+
+        if feature.GetField('boundary') != 'administrative':
+            # skip further processing
+            continue
+
+        # process national level boundary
+        if admin_level == '2':
+            createPolys(
+                feature, abspath, bufferDistance, simplifyDistance, geojson,
+                osm_id
+            )
 
 
 parser = argparse.ArgumentParser(
