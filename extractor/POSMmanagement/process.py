@@ -46,6 +46,43 @@ class ProcessManagement():
             LOG.error(msg)
             sys.exit(99)
 
+    def processAdminLevelsGADM(self, settings_file):
+        command = [
+            'python', 'extract_gadm.py', '--settings', settings_file,
+            '--problems_as_geojson'
+        ]
+        LOG.debug('Command: %s', ' '.join(command))
+
+        proc = subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            shell=False
+        )
+
+        msg = proc_exec(proc, self.verbose)
+
+        if proc.returncode != 0:
+            LOG.error('Admin level processing has not exited cleanly!')
+            LOG.error(msg)
+            sys.exit(99)
+
+    def snapToGrid(self, grid_size=0.00005):
+        conn = psycopg2.connect(**self.db_params)
+        cur = conn.cursor()
+        try:
+            cur.execute("set search_path = \"$user\", 'public', 'topology';")
+            print('Snapping to grid ...')
+            cur.execute('update admin_level_0 set wkb_geometry = st_snaptogrid(wkb_geometry, %s)', (grid_size,))
+            cur.execute('update admin_level_1 set wkb_geometry = st_snaptogrid(wkb_geometry, %s)', (grid_size,))
+            cur.execute('update admin_level_2 set wkb_geometry = st_snaptogrid(wkb_geometry, %s)', (grid_size,))
+            conn.commit()
+
+        except psycopg2.ProgrammingError, e:
+            print('Unhandeld error: (%s) %s', e.pgcode, e.pgerror)
+            raise e
+
+        cur.close()
+        conn.close()
+
     def deconstructGeometry(self):
         conn = psycopg2.connect(**self.db_params)
 

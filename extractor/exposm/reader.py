@@ -85,3 +85,9 @@ class AdminLevelReader(FeatureReader):
             return True
         else:
             return False
+
+
+class GADMAdminLevelReader(FeatureReader):
+    """
+    Specific admin_level reader for GADM data
+    """

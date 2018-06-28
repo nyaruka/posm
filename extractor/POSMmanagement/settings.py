@@ -14,8 +14,9 @@ class POSMSettings():
 
     def __init__(self, settingsFile, verbose=False):
         self.settingsFile = settingsFile
-        self._readSettings()
         self.verbose = verbose
+
+        self._readSettings()
 
     def _readSettings(self):
         LOG.debug('Reading settings from %s', self.settingsFile)
@@ -26,7 +27,9 @@ class POSMSettings():
         with open(self.settingsFile, 'r') as tmpfile:
             self.settings.update(yaml.load(tmpfile))
         self._decodeDBConnection()
+
         self._readAdminLevels()
+
         self._setupGDAL()
 
     def get_settings(self):
@@ -36,8 +39,11 @@ class POSMSettings():
         return self.admin_levels
 
     def _readAdminLevels(self):
-        admin_levels_file = open('admin_mapping.yaml', 'rb')
-        self.admin_levels.update(yaml.load(admin_levels_file))
+        try:
+            with open('admin_mapping.yaml', 'rb') as admin_levels_file:
+                self.admin_levels.update(yaml.load(admin_levels_file))
+        except IOError:
+            LOG.warn('Admin mapping file not found')
 
     def _setupGDAL(self):
         # required for OSM data format

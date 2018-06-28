@@ -2,7 +2,12 @@ CREATE OR REPLACE FUNCTION init_base_topology() RETURNS VOID AS
 $func$
 BEGIN
 
+BEGIN
 PERFORM DropTopology('admin_topo');
+EXCEPTION WHEN others THEN
+-- ignore exceptions for missing topology
+END;
+
 PERFORM CreateTopology('admin_topo', 4326);
 PERFORM AddTopoGeometryColumn('admin_topo', 'public', 'all_geom', 'topo', 'MULTIPOLYGON');
 
