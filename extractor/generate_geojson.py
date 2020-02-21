@@ -109,7 +109,7 @@ def write_feature(datasource, feature_data, feature_geom):
     new_feat = None
 
 
-def create_archive():
+def create_archive(directory):
     """
     Use subprocess call to 'zip' to create a zip archive of created geojson
     files
@@ -117,11 +117,14 @@ def create_archive():
     ..Note: built-in module zipfile was creating correct zip files with
     corrupted files
     """
-    if os.path.exists('exported_geojson.zip'):
-        os.unlink('exported_geojson.zip')
+    filename = os.path.join(directory, 'exported_geojson.zip')
+    LOG.info(f"Creating {filename} ..")
+
+    if os.path.exists(filename):
+        os.unlink(filename)
 
     result = subprocess.call([
-        'zip', '-j', '-r', 'exported_geojson.zip',
+        'zip', '-j', '-r', filename,
         settings.get('exposm').get('geojson_output_directory')
     ],
         stdout=open(os.devnull, 'wb'),  # make it silent
@@ -129,6 +132,8 @@ def create_archive():
     )
     if result:
         LOG.error('Problem creating ZIP archive...')
+    else:
+        LOG.info(".. success!")
 
 
 def main(settings, cli_args):
@@ -141,11 +146,10 @@ def main(settings, cli_args):
     simple_ad2 = datasource.GetLayerByName('simple_admin_2_view')
 
     # use provided arguments
-    if cli_args.rm:
-        directory = settings.get('exposm').get('geojson_output_directory')
-        if os.path.exists(directory):
-            shutil.rmtree(directory)
-        os.mkdir(settings.get('exposm').get('geojson_output_directory'))
+    directory = settings.get('exposm').get('geojson_output_directory')
+    if os.path.exists(directory):
+        shutil.rmtree(directory)
+    os.mkdir(settings.get('exposm').get('geojson_output_directory'))
 
     if cli_args.all:
         args_list = []
@@ -308,8 +312,7 @@ def main(settings, cli_args):
             LOG.warning('Feature %s is missing ...', osm_id)
 
     if osm_ids:
-        LOG.info('Creating archive in the current directory...')
-        create_archive()
+        create_archive(settings.get('sources').get('data_directory'))
 
 
 if __name__ == '__main__':

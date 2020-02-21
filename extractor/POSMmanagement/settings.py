@@ -25,7 +25,7 @@ class POSMSettings():
             sys.exit(99)
 
         with open(self.settingsFile, 'r') as tmpfile:
-            self.settings.update(yaml.load(tmpfile))
+            self.settings.update(yaml.load(tmpfile, Loader=yaml.SafeLoader))
         self._decodeDBConnection()
 
         self._readAdminLevels()
@@ -41,7 +41,7 @@ class POSMSettings():
     def _readAdminLevels(self):
         try:
             with open('admin_mapping.yaml', 'rb') as admin_levels_file:
-                self.admin_levels.update(yaml.load(admin_levels_file))
+                self.admin_levels.update(yaml.load(admin_levels_file, Loader=yaml.SafeLoader))
         except IOError:
             LOG.warn('Admin mapping file not found')
 

@@ -23,7 +23,7 @@ class FeatureReader(object):
         # OGR_INTERLEAVED_READING
 # http://lists.osgeo.org/pipermail/gdal-dev/2014-January/037804.html
 # http://trac.osgeo.org/gdal/changeset/26784/trunk/gdal/ogr/ogrsf_frmts/osm
-        for iLayer in xrange(nLayerCount):
+        for iLayer in range(nLayerCount):
             lyr = self.datasource.GetLayer(iLayer)
             lyr.SetAttributeFilter(self.attr_filter)
 
@@ -47,7 +47,7 @@ class FeatureReader(object):
             thereIsDataInLayer = False
 
             # read data from layers using OGR_INTERLEAVED_READING method
-            for iLayer in xrange(nLayerCount):
+            for iLayer in range(nLayerCount):
                 lyr = self.datasource.GetLayer(iLayer)
                 # read next Feature
                 feat = lyr.GetNextFeature()
@@ -88,6 +88,11 @@ class AdminLevelReader(FeatureReader):
 
 
 class GADMAdminLevelReader(FeatureReader):
+    """
+    Specific admin_level reader for GADM data
+    """
+
+class GEOJSONAdminLevelReader(FeatureReader):
     """
     Specific admin_level reader for GADM data
     """

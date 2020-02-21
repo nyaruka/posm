@@ -39,7 +39,7 @@ class ProjectManagement():
         osm_file_path = os.path.normpath(
             os.path.join(self.workDir, '{}.o5m'.format(self.osmFile))
         )
-        print osm_file_path, osm_originPath
+        print(osm_file_path, osm_originPath)
         if (os.path.exists(osm_file_path) and
                 os.path.samefile(osm_file_path, osm_originPath)):
             LOG.error((

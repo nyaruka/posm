@@ -26,7 +26,7 @@ class DBManagement():
             LOG.info('Dropping database: %s', old_db)
             cur.execute('DROP DATABASE {};'.format(old_db))
             conn.commit()
-        except psycopg2.ProgrammingError, e:
+        except psycopg2.ProgrammingError as e:
             if e.pgcode == '3D000':
                 # database does not exist
                 LOG.error(e.pgerror)
@@ -51,7 +51,7 @@ class DBManagement():
             LOG.info('Creating database: %s', new_db)
             cur.execute('CREATE DATABASE {};'.format(new_db))
             conn.commit()
-        except psycopg2.ProgrammingError, e:
+        except psycopg2.ProgrammingError as e:
             if e.pgcode == '42P04':
                 # database already exist
                 LOG.error(e.pgerror)
@@ -79,7 +79,7 @@ class DBManagement():
                 LOG.debug('Creating extension: %s', ext)
                 cur.execute('CREATE EXTENSION {}'.format(ext))
                 conn.commit()
-            except psycopg2.ProgrammingError, e:
+            except psycopg2.ProgrammingError as e:
                 LOG.error('Unhandeld error: (%s) %s', e.pgcode, e.pgerror)
                 raise e
 
@@ -91,7 +91,7 @@ class DBManagement():
                 LOG.debug('Creating POSM DB functions...')
                 cur.execute(sqlcode)
                 conn.commit()
-            except psycopg2.ProgrammingError, e:
+            except psycopg2.ProgrammingError as e:
                 LOG.error('Unhandeld error: (%s) %s', e.pgcode, e.pgerror)
                 raise e
 

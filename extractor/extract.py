@@ -104,6 +104,8 @@ def main(settings, admin_levels, problems_geojson):
         geom_raw = feature.GetGeometryRef()
         feature_data = []
 
+        print(f"{osm_id}: {name_en}")
+
         bad_geom = check_bad_geom(geom_raw, osm_id)
         # BONKERS features usually crash QGIS, we need to skip those
         if bad_geom:

@@ -1,5 +1,7 @@
-GDAL
-PyYAML
-Shapely
-Rtree
-psycopg2
+GDAL==2.4.4
+numpy==1.18.1
+psycopg2==2.8.4
+PyYAML==5.3
+Rtree==0.9.4
+Shapely==1.7.0
+six==1.12.0

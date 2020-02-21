@@ -24,10 +24,6 @@ class ProcessManagement():
         ]
         LOG.debug('Command: %s', ' '.join(command))
 
-        proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            shell=False
-        )
         # execute the process ... .wait()
         admin_level_data_path = os.path.join(
             self.settings.get('sources').get('data_directory'),
@@ -39,9 +35,9 @@ class ProcessManagement():
         LOG.info(
             'Processing admin levels %s', admin_level_data_path
         )
-        msg = proc_exec(proc, self.verbose)
+        exit_code, msg = proc_exec(command, self.verbose)
 
-        if proc.returncode != 0:
+        if exit_code != 0:
             LOG.error('Admin level processing has not exited cleanly!')
             LOG.error(msg)
             sys.exit(99)
@@ -53,14 +49,22 @@ class ProcessManagement():
         ]
         LOG.debug('Command: %s', ' '.join(command))
 
-        proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            shell=False
-        )
+        exit_code, msg = proc_exec(command, self.verbose)
 
-        msg = proc_exec(proc, self.verbose)
+        if exit_code != 0:
+            LOG.error('Admin level processing has not exited cleanly!')
+            LOG.error(msg)
+            sys.exit(99)
 
-        if proc.returncode != 0:
+    def processAdminLevelsGEOJSON(self, settings_file):
+        command = [
+            'python', 'extract_geojson.py', '--settings', settings_file,
+            '--problems_as_geojson'
+        ]
+        LOG.debug('Command: %s', ' '.join(command))
+
+        exit_code, msg = proc_exec(command, self.verbose)
+        if exit_code != 0:
             LOG.error('Admin level processing has not exited cleanly!')
             LOG.error(msg)
             sys.exit(99)
@@ -76,7 +80,7 @@ class ProcessManagement():
             cur.execute('update admin_level_2 set wkb_geometry = st_snaptogrid(wkb_geometry, %s)', (grid_size,))
             conn.commit()
 
-        except psycopg2.ProgrammingError, e:
+        except psycopg2.ProgrammingError as e:
             print('Unhandeld error: (%s) %s', e.pgcode, e.pgerror)
             raise e
 
@@ -93,7 +97,7 @@ class ProcessManagement():
             cur.execute('select deconstruct_geometry();')
             conn.commit()
 
-        except psycopg2.ProgrammingError, e:
+        except psycopg2.ProgrammingError as e:
             LOG.error('Unhandeld error: (%s) %s', e.pgcode, e.pgerror)
             raise e
 
@@ -109,7 +113,7 @@ class ProcessManagement():
             LOG.info('Initializing topology...')
             cur.execute('select init_base_topology();')
 
-        except psycopg2.ProgrammingError, e:
+        except psycopg2.ProgrammingError as e:
             LOG.error('Unhandeld error: (%s) %s', e.pgcode, e.pgerror)
             raise e
 
@@ -128,7 +132,7 @@ class ProcessManagement():
                 )
                 cur.execute('select create_base_topology_for_id(%s);', osm_id)
             conn.commit()
-        except psycopg2.ProgrammingError, e:
+        except psycopg2.ProgrammingError as e:
             LOG.error('Unhandeld error: (%s) %s', e.pgcode, e.pgerror)
             raise e
 
@@ -145,7 +149,7 @@ class ProcessManagement():
             cur.execute('select simplify_dissolve(%s);', (tolerance,))
             conn.commit()
 
-        except psycopg2.ProgrammingError, e:
+        except psycopg2.ProgrammingError as e:
             LOG.error('Unhandeld error: (%s) %s', e.pgcode, e.pgerror)
             raise e
 
@@ -166,15 +170,11 @@ class ProcessManagement():
             ]
 
         LOG.debug('Command: %s', ' '.join(command))
-        proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            shell=False
-        )
         # execute the process ... .wait()
         LOG.info('Converting to geojson ... exported_geojson.zip')
-        msg = proc_exec(proc, self.verbose)
+        exit_code, msg = proc_exec(command, self.verbose)
 
-        if proc.returncode != 0:
+        if exit_code != 0:
             LOG.error('Converting to geojson has not exited cleanly!')
             LOG.error(msg)
             sys.exit(99)

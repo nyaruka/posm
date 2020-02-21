@@ -1,0 +1,70 @@
+sources:
+    osm_config_file: boundary.ini  # relative file path to the [export|manage].py
+
+    data_directory: '/Users/nicp/nyaruka/posm/nepal'  # full path to the data directory
+    data_file: 'nepal-latest'  # a filename for initial OSM file
+    poly_file: './poly/NP_R184633.poly'  # path to the area poly file, can be blank if working with planet.osm
+    admin_levels_file: 'admin_levels'  # a file name for the file containing prepared admin_levels
+
+gadm_source:
+    shp_package: '/home/ubuntu/arst'
+
+geojson_source:
+  level_0: '/Users/nicp/nyaruka/posm/nepal/nepal_2.geojson'
+  level_1: '/Users/nicp/nyaruka/posm/nepal/nepal_3.geojson'
+  level_2: null
+  level_3: null
+
+gdal:
+    # how much memory is gdal allowed to allocate
+    memory_limit: '1'
+    # if memory is not enough, use this folder to store temporary files
+    tempfile_dir: '/tmp'
+    # show debug information, ON/OFF
+    debug: 'ON'
+    debug_file: '/tmp/gdal_log.log'
+
+# gdal driver specific settings
+exposm:
+    shp_output_directory: /tmp/out
+    postgis: "PG:dbname='nepal' user='nicp'"
+    geojson_output_directory: /tmp/geojson
+
+# logging setup
+logging:
+    version: 1
+    disable_existing_loggers: False
+    formatters:
+        simple:
+            format: '%(levelname)s %(message)s'
+        verbose:
+            format: '%(levelname)s %(asctime)s %(module)s %(message)s'
+            datefmt: '%Y/%m/%d %H:%M:%S'
+
+    handlers:
+        console:
+            class: logging.StreamHandler
+            formatter: simple
+            level: DEBUG
+            stream: ext://sys.stdout
+        file:
+            class : logging.FileHandler
+            formatter: verbose
+            level: DEBUG
+            mode: w
+            filename: /tmp/export.log
+
+    # optionally set a specific logger for extract module
+    # loggers:
+    #     extract:
+    #         level: DEBUG
+    #         handlers:
+    #             - console
+
+    root:
+        level: DEBUG
+        handlers:
+            - console
+            - file
+
+

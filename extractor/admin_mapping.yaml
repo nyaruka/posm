@@ -1,0 +1,273 @@
+default:
+    admin_level_0: 2
+    admin_level_1: 4
+    admin_level_2: 6
+
+per_country:
+    'R184633':
+      admin_level_1: 3
+      admin_level_2: 6
+      meta:
+           name:   'Nepal'
+
+    'R304716':
+      admin_level_1: 4
+      admin_level_2: 5
+      meta:
+           name:   'India'
+
+    'R14296':
+        admin_level_1: 4
+        admin_level_2: 8
+        meta:
+            name:   'Slovakia'
+    'R1473946':
+        admin_level_1: 4
+        admin_level_2: 8
+        meta:
+            name:   'Israel'
+    'R1656678':
+        admin_level_1: 4
+        admin_level_2: 5
+        meta:
+            name:   'South Sudan'
+    'R167454':
+        admin_level_1: 4
+        admin_level_2: 8
+        meta:
+            name:   'Chile'
+    'R1703814':
+        admin_level_1: 4
+        admin_level_2: 8
+        meta:
+            name:   'Palestine'
+    'R1741311':
+        admin_level_1: 6
+        admin_level_2: 8
+        meta:
+            name:   'Serbia'
+    'R178009':
+        admin_level_1: 4
+        admin_level_2: 5
+        meta:
+            name:   'Kyrgyzstan'
+    'R184818':
+        admin_level_1: 3
+        admin_level_2: 4
+        meta:
+            name:   'Jordan'
+    'R184843':
+        admin_level_1: 3
+        admin_level_2: 4
+        meta:
+            name:   'Lebanon'
+    'R186382':
+        admin_level_1: 6
+        admin_level_2: 8
+        meta:
+            name:   'Bulgaria'
+    'R192757':
+        admin_level_1: 4
+        admin_level_2: 5
+        meta:
+            name:   'Tunisia'
+    'R192775':
+        admin_level_1: 3
+        admin_level_2: 7
+        meta:
+            name:   'Senegal'
+    'R192777':
+        admin_level_1: 4
+        admin_level_2: 5
+        meta:
+            name:   'Sierra Leone'
+    'R192779':
+        admin_level_1: 4
+        admin_level_2: 5
+        meta:
+            name:   "C\xF4te d'Ivoire"
+    'R192781':
+        admin_level_1: 4
+        admin_level_2: 5
+        meta:
+            name:   'Ghana'
+    'R192783':
+        admin_level_1: 4
+        admin_level_2: 5
+        meta:
+            name:   'Burkina Faso'
+    'R192795':
+        admin_level_1: 4
+        admin_level_2: 7
+        meta:
+            name:   'Congo-Kinshasa'
+    'R192796':
+        admin_level_1: 6
+        admin_level_2: 8
+        meta:
+            name:   'Uganda'
+    'R192800':
+        admin_level_1: 4
+        admin_level_2: 5
+        meta:
+            name:   'Ethiopia'
+    'R195270':
+        admin_level_1: 4
+        admin_level_2: 5
+        meta:
+            name:   'Tanzania'
+    'R1964272':
+        admin_level_1: 3
+        admin_level_2: 6
+        meta:
+            name:   'Saint Helena, Ascension and Tristan da Cunha'
+    'R1983628':
+        admin_level_1: 3
+        admin_level_2: 6
+        meta:
+            name:   'South Georgia and the South Sandwich Islands'
+    'R21335':
+        admin_level_1: 5
+        admin_level_2: 7
+        meta:
+            name:   'Hungary'
+    'R214885':
+        admin_level_1: 6
+        admin_level_2: 7
+        meta:
+            name:   'Croatia'
+    'R2171347':
+        admin_level_1: 4
+        admin_level_2: 5
+        meta:
+            name:   'Luxemburg'
+    'R2177187':
+        admin_level_1: 4
+        admin_level_2: 8
+        meta:
+            name:   'American Samoa'
+    'R218657':
+        admin_level_1: 3
+        admin_level_2: 5
+        meta:
+            name:   'Slovenia'
+    'R2528142':
+        admin_level_1: 5
+        admin_level_2: 7
+        meta:
+            name:   'Bosnia and Herzegovina'
+    'R270009':
+        admin_level_1: 4
+        admin_level_2: 4
+        meta:
+            name:   'Guernsey'
+    'R287077':
+        admin_level_1: 4
+        admin_level_2: 8
+        meta:
+            name:   'Paraguay'
+    'R2978650':
+        admin_level_1: 4
+        admin_level_2: 7
+        meta:
+            name:   'Norway'
+    'R307829':
+        admin_level_1: 4
+        admin_level_2: 8
+        meta:
+            name:   'Haiti'
+    'R365307':
+        admin_level_1: 4
+        admin_level_2: 4
+        meta:
+            name:   'Malta'
+    'R367988':
+        admin_level_1: 4
+        admin_level_2: 8
+        meta:
+            name:   'Jersey'
+    'R382313':
+        admin_level_1: 4
+        admin_level_2: 7
+        meta:
+            name:   'Japan'
+    'R447325':
+        admin_level_1: 3
+        admin_level_2: 4
+        meta:
+            name:   'Madagascar'
+    'R449220':
+        admin_level_1: 4
+        admin_level_2: 5
+        meta:
+            name:   'Taiwan'
+    'R50046':
+        admin_level_1: 4
+        admin_level_2: 7
+        meta:
+            name:   'Denmark'
+    'R52411':
+        admin_level_1: 6
+        admin_level_2: 7
+        meta:
+            name:   'Belgium'
+    'R52822':
+        admin_level_1: 4
+        admin_level_2: 7
+        meta:
+            name:   'Sweden'
+    'R53292':
+        admin_level_1: 6
+        admin_level_2: 7
+        meta:
+            name:   'Albania'
+    'R53293':
+        admin_level_1: 4
+        admin_level_2: 7
+        meta:
+            name:   'Macedonia'
+    'R53296':
+        admin_level_1: 6
+        admin_level_2: 8
+        meta:
+            name:   'Montenegro'
+    'R535828':
+        admin_level_1: 4
+        admin_level_2: 4
+        meta:
+            name:   'Mauritius'
+    'R536807':
+        admin_level_1: 4
+        admin_level_2: 5
+        meta:
+            name:   'Sri Lanka'
+    'R54224':
+        admin_level_1: 6
+        admin_level_2: 8
+        meta:
+            name:   'Finland'
+    'R555017':
+        admin_level_1: 5
+        admin_level_2: 6
+        meta:
+            name:   'Jamaica'
+    'R62269':
+        admin_level_1: 6
+        admin_level_2: 8
+        meta:
+            name:   'Isle of Man'
+    'R62273':
+        admin_level_1: 5
+        admin_level_2: 6
+        meta:
+            name:   'Ireland'
+    'R79510':
+        admin_level_1: 6
+        admin_level_2: 8
+        meta:
+            name:   'Estonia'
+    'R80500':
+        admin_level_1: 6
+        admin_level_2: 8
+        meta:
+            name:   'Australia'
