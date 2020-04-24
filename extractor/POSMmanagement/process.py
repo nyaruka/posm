@@ -69,6 +69,19 @@ class ProcessManagement():
             LOG.error(msg)
             sys.exit(99)
 
+    def processAdminLevelsOverpass(self, settings_file, relation_id):
+        command = [
+            'python', 'extract_overpass.py', '--settings', settings_file,
+            '--problems_as_geojson', relation_id,
+        ]
+        LOG.debug('Command: %s', ' '.join(command))
+
+        exit_code, msg = proc_exec(command, self.verbose)
+        if exit_code != 0:
+            LOG.error('Admin level processing has not exited cleanly!')
+            LOG.error(msg)
+            sys.exit(99)
+
     def snapToGrid(self, grid_size=0.00005):
         conn = psycopg2.connect(**self.db_params)
         cur = conn.cursor()

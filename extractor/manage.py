@@ -61,6 +61,19 @@ def extract_and_simplify_geojson(args):
     ext_sim.convertToGeoJson(args.settings)
 
 
+def extract_and_simplify_overpass(args):
+    # initialize settings
+    proj_settings = POSMSettings(args.settings, verbose=args.verbose)
+
+    ext_sim = ProcessManagement(proj_settings, verbose=args.verbose)
+    ext_sim.processAdminLevelsOverpass(args.settings, args.relation_id)
+    ext_sim.snapToGrid(grid_size=args.snapToGrid)
+    ext_sim.deconstructGeometry()
+    ext_sim.createBaseTopology()
+    ext_sim.simplifyAdminLevels(args.tolerance)
+    ext_sim.convertToGeoJson(args.settings)
+
+
 def run_all(args):
     update_data(args)
     extract_and_simplify(args)
@@ -166,6 +179,29 @@ parser_ext_sim_geojson.add_argument(
 )
 parser_ext_sim_geojson.set_defaults(func=extract_and_simplify_geojson)
 
+# extract_and_simplify GEOJSON
+parser_ext_sim_overpass = subparsers.add_parser(
+    'extract_and_simplify_overpass', help='extractAdminLevels GEOJSON, simplifyAdminLevels'
+)
+parser_ext_sim_overpass.add_argument(
+    '--tolerance', type=float, default=0.001,
+    help=(
+        'Tolerance parameter for DouglasPeucker simplification algorithm '
+        '(default: 0.001)'
+    )
+)
+parser_ext_sim_overpass.add_argument(
+    '--snapToGrid', type=float, default=0.00005,
+    help=(
+        'Size parameter for the SnapToGrid PostGIS function (default: 0.00005)'
+    )
+)
+parser_ext_sim_overpass.add_argument(
+    'relation_id',
+    help="The relation ID of the country to extract and simplify",
+)
+parser_ext_sim_overpass.set_defaults(func=extract_and_simplify_overpass)
+
 # download_OSM
 parser_download_OSM = subparsers.add_parser(
     'download_OSM',
@@ -209,7 +245,6 @@ parser.add_argument(
     '--settings', default='settings.yaml',
     help='path to the settings file, default: settings.yaml'
 )
-
 
 if __name__ == '__main__':
     # parse the args, and call default function
