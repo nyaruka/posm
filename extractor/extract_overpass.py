@@ -12,6 +12,7 @@ import sys
 import zipfile
 import tempfile
 import glob
+import ast
 import subprocess
 
 import rtree
@@ -24,6 +25,8 @@ from POSMmanagement.utils import is_file_readable
 
 # setup logging, has to be after osmext.settings
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 from exposm.writer import AdminLevelWriter
 from exposm.reader import GEOJSONAdminLevelReader
 from exposm.utils import (
@@ -35,11 +38,35 @@ import xml.etree.ElementTree as ET
 import json
 import time
 
+def decode_utf8(input):
+    """
+    Takes a possibly escaped utf8 string and returns it as the properly decoded version
+    """
+    if not input:
+        return input
+
+    print(input)
+    try:
+        return ast.literal_eval('b"%s"' % input).decode("utf8")
+    except SyntaxError:
+        return ast.literal_eval('"%s"' % input)
+
 def download_from_overpass(relation_ids, level=0, country=""):
     geojson = dict(
         type="FeatureCollection",
         features=[],
     )
+
+    retry_strategy = Retry(
+        total=10,
+        backoff_factor=2,
+        status_forcelist=[429, 500, 502, 503, 504, 429],
+        method_whitelist=["HEAD", "GET", "OPTIONS"]
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    http = requests.Session()
+    http.mount("https://", adapter)
+    http.mount("http://", adapter)
 
     children = []
     for relation_id in relation_ids:
@@ -51,7 +78,7 @@ def download_from_overpass(relation_ids, level=0, country=""):
         relation({relation_id});
         out geom;
         """
-        metadata = requests.get("http://overpass-api.de/api/interpreter", data=query)
+        metadata = http.get("http://overpass-api.de/api/interpreter", data=query, timeout=60, headers={"User-Agent": "POSM/code@nyaruka.com"})
         root = ET.fromstring(metadata.content)
 
         # build our list of children
@@ -73,11 +100,13 @@ def download_from_overpass(relation_ids, level=0, country=""):
         # convert to geojson
         converted = subprocess.check_output(["/Users/nicp/.nvm/versions/node/v12.16.1/bin/osmtogeojson", "feature.osm"])
         features = json.loads(converted)
+
         found = False
         for feature in features["features"]:
             if feature["id"] == f"relation/{relation_id}":
                 feature["properties"]["osm_id"] = f"{relation_id}"
-                feature["properties"]["name_en"] = feature["properties"].get("name_en", name)
+                feature["properties"]["name"] = decode_utf8(feature["properties"]["name"])
+                feature["properties"]["name_en"] = decode_utf8(feature["properties"].get("name_en", name))
                 geojson["features"].append(feature)
                 found = True
 
@@ -88,7 +117,7 @@ def download_from_overpass(relation_ids, level=0, country=""):
 
     # write our file out
     filename = f"{country.lower()}_{level}.geojson"
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="utf8") as f:
         f.write(json.dumps(geojson, indent="  "))
 
     files = [filename]
@@ -236,7 +265,7 @@ def main(settings, problems_geojson, relation_id):
         lyr_read = GEOJSONAdminLevelReader(level2_file)
 
         for layer, feature in lyr_read.readData():
-            osm_id = feature.GetField("osmid")
+            osm_id = feature.GetField("osm_id")
             name = feature.GetField('name')
             name_en = feature.GetField('name_en')
 
