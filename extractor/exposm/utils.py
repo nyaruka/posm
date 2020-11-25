@@ -1,8 +1,8 @@
 import logging
 LOG = logging.getLogger(__file__)
 
-import osr
-import ogr
+from osgeo import osr
+from osgeo import ogr
 
 import os
 

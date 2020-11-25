@@ -3,7 +3,7 @@ LOG = logging.getLogger(__file__)
 
 import sys
 import yaml
-import gdal
+from osgeo import gdal
 
 from .utils import is_file_readable
 

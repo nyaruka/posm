@@ -51,16 +51,18 @@ def main(settings, problems_geojson):
 
     LOG.info('Started exporting admin_level_0 boundaries!')
     for layer, feature in lyr_read.readData():
-        osm_id = feature.GetField("osm_id")
+        import pdb; pdb.set_trace()
+
+        osm_id = feature.GetField("full_id")
         name = feature.GetField('name')
-        name_en = feature.GetField('name_en')
+        #name_en = feature.GetField('name_en')
 
         geom_raw = ogr.ForceToMultiPolygon(feature.GetGeometryRef())
 
         feature_data = (
             ('osm_id', osm_id),
             ('name', name),
-            ('name_en', name_en),
+         #   ('name_en', name_en),
             ('adminlevel', 0),
             ('iso3166', osm_id),
             ('is_in', None)
@@ -109,9 +111,9 @@ def main(settings, problems_geojson):
 
 
     for layer, feature in lyr_read.readData():
-        osm_id = feature.GetField("osm_id")
+        osm_id = feature.GetField("full_id")
         name = feature.GetField('name')
-        name_en = feature.GetField('name_en')
+        #name_en = feature.GetField('name_en')
 
         geom_raw = ogr.ForceToMultiPolygon(feature.GetGeometryRef())
 
@@ -139,7 +141,7 @@ def main(settings, problems_geojson):
         feature_data = (
             ('osm_id', osm_id),
             ('name', name),
-            ('name_en', name_en),
+         #   ('name_en', name_en),
             ('adminlevel', 1),
             ('iso3166', None),
             ('is_in', is_in)
@@ -163,12 +165,14 @@ def main(settings, problems_geojson):
     if level2_file is None:
         lyr_save = None
     else:
+        print("opening")
         lyr_read = GEOJSONAdminLevelReader(level2_file)
+        print("opened")
 
         for layer, feature in lyr_read.readData():
-            osm_id = feature.GetField("osmid")
+            osm_id = feature.GetField("full_id")
             name = feature.GetField('name')
-            name_en = feature.GetField('name_en')
+          #  name_en = feature.GetField('name_en')
 
             geom_raw = ogr.ForceToMultiPolygon(feature.GetGeometryRef())
 
@@ -196,7 +200,7 @@ def main(settings, problems_geojson):
             feature_data = (
                 ('osm_id', osm_id),
                 ('name', name),
-                ('name_en', name_en),
+                #('name_en', name_en),
                 ('adminlevel', 2),
                 ('iso3166', None),
                 ('is_in', is_in_state)
