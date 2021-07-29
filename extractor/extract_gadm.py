@@ -40,7 +40,7 @@ def extractGADMArchive(filepath):
     return sorted(glob.glob('{}/*.shp'.format(tmpDir)))
 
 
-def main(settings, problems_geojson):
+def main(settings, problems_geojson, package):
 
     if problems_geojson:
         problems_datasource = create_GEOJSON('', 'problems.geojson')
@@ -57,7 +57,7 @@ def main(settings, problems_geojson):
 
     lyr_save = AdminLevelWriter.create_postgis('admin_level_0', settings)
 
-    admin_files = extractGADMArchive(settings.get('gadm_source').get('shp_package'))
+    admin_files = extractGADMArchive(package)
     LOG.debug('Admin files: {}'.format(admin_files))
 
     if not(all(is_file_readable(admin_path) for admin_path in admin_files)):
@@ -241,15 +241,19 @@ parser.add_argument(
     help='Generate problems.geojson in the current directory'
 )
 
+parser.add_argument(
+    '--package',
+    help='The location of the GADM SHP package'
+)
+
 if __name__ == '__main__':
     # parse the args, and call default function
     args = parser.parse_args()
     proj_settings = POSMSettings(args.settings)
 
     settings = proj_settings.get_settings()
-
     logging.config.dictConfig(settings.get('logging'))
 
     main(
-        settings=settings, problems_geojson=args.problems_as_geojson
+        settings=settings, problems_geojson=args.problems_as_geojson, package=args.package,
     )

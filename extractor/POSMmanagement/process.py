@@ -42,10 +42,10 @@ class ProcessManagement():
             LOG.error(msg)
             sys.exit(99)
 
-    def processAdminLevelsGADM(self, settings_file):
+    def processAdminLevelsGADM(self, settings_file, package):
         command = [
             'python', 'extract_gadm.py', '--settings', settings_file,
-            '--problems_as_geojson'
+            '--problems_as_geojson', '--package', package
         ]
         LOG.debug('Command: %s', ' '.join(command))
 

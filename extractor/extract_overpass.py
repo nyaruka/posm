@@ -79,6 +79,7 @@ def download_from_overpass(relation_ids, level=0, country=""):
         out geom;
         """
         metadata = http.get("http://overpass-api.de/api/interpreter", data=query, timeout=60, headers={"User-Agent": "POSM/code@nyaruka.com"})
+        print(metadata.content)
         root = ET.fromstring(metadata.content)
 
         # build our list of children

@@ -109,7 +109,7 @@ def write_feature(datasource, feature_data, feature_geom):
     new_feat = None
 
 
-def create_archive(directory):
+def create_archive(directory, name):
     """
     Use subprocess call to 'zip' to create a zip archive of created geojson
     files
@@ -117,7 +117,7 @@ def create_archive(directory):
     ..Note: built-in module zipfile was creating correct zip files with
     corrupted files
     """
-    filename = os.path.join(directory, 'exported_geojson.zip')
+    filename = os.path.join(directory, '%s_exported_geojson.zip' % name)
     LOG.info(f"Creating {filename} ..")
 
     if os.path.exists(filename):
@@ -312,7 +312,7 @@ def main(settings, cli_args):
             LOG.warning('Feature %s is missing ...', osm_id)
 
     if osm_ids:
-        create_archive(settings.get('sources').get('data_directory'))
+        create_archive(settings.get('sources').get('data_directory'), ad0_osm_id)
 
 
 if __name__ == '__main__':

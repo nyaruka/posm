@@ -40,7 +40,7 @@ def extract_and_simplify_gadm(args):
     proj_settings = POSMSettings(args.settings, verbose=args.verbose)
 
     ext_sim = ProcessManagement(proj_settings, verbose=args.verbose)
-    ext_sim.processAdminLevelsGADM(args.settings)
+    ext_sim.processAdminLevelsGADM(args.settings, args.package)
     ext_sim.snapToGrid(grid_size=args.snapToGrid)
     ext_sim.deconstructGeometry()
     ext_sim.createBaseTopology()
@@ -151,6 +151,10 @@ parser_ext_sim_gadm.add_argument(
         'Tolerance parameter for DouglasPeucker simplification algorithm '
         '(default: 0.001)'
     )
+)
+parser_ext_sim_gadm.add_argument(
+    '--package', type=str,
+    help='The SHP package to extract from',
 )
 parser_ext_sim_gadm.add_argument(
     '--snapToGrid', type=float, default=0.00005,
