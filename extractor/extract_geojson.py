@@ -51,7 +51,6 @@ def main(settings, problems_geojson):
 
     LOG.info('Started exporting admin_level_0 boundaries!')
     for layer, feature in lyr_read.readData():
-        import pdb; pdb.set_trace()
 
         osm_id = feature.GetField("full_id")
         name = feature.GetField('name')

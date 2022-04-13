@@ -64,9 +64,9 @@ class ProjectManagement():
             'Cutting %s from %s using %s...', self.osmFile, osm_originPath,
             polyfile_path
         )
-        msg = proc_exec(proc, self.verbose)
+        exit_code, msg = proc_exec(proc.args, self.verbose)
 
-        if proc.returncode != 0:
+        if exit_code != 0:
             LOG.error('Extract cutting has not exited cleanly!')
             LOG.error(msg)
             sys.exit(99)
@@ -112,9 +112,9 @@ class ProjectManagement():
         proc1.stdout.close()
         # execute the process ... .wait()
         LOG.info('Downloading and compiling osmconvert...')
-        msg = proc_exec(proc2, self.verbose)
+        exit_code, msg = proc_exec(proc2.args, self.verbose)
 
-        if proc2.returncode != 0:
+        if exit_code != 0:
             LOG.error('Osmconvert not compiled!')
             LOG.error(msg)
             sys.exit(99)
@@ -136,9 +136,9 @@ class ProjectManagement():
         proc1.stdout.close()
         # execute the process ... .wait()
         LOG.info('Downloading and compiling osmfilter...')
-        msg = proc_exec(proc2, self.verbose)
+        exit_code, msg = proc_exec(proc2.args, self.verbose)
 
-        if proc2.returncode != 0:
+        if exit_code != 0:
             LOG.error('Osmfilter not compiled!')
             LOG.error(msg)
             sys.exit(99)
@@ -160,9 +160,9 @@ class ProjectManagement():
         proc1.stdout.close()
         # execute the process ... .wait()
         LOG.info('Downloading and compiling osmupdate...')
-        msg = proc_exec(proc2, self.verbose)
+        exit_code, msg = proc_exec(proc2.args, self.verbose)
 
-        if proc2.returncode != 0:
+        if exit_code != 0:
             LOG.error('Osmupdate not compiled!')
             LOG.error(msg)
             sys.exit(99)

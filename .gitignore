@@ -2,3 +2,6 @@ env
 .idea
 .DS_Store
 *.pyc
+*.zip
+problems.geojson
+*yaml

@@ -37,9 +37,9 @@ class OSMmanagement():
         )
 
         LOG.info('Downloading OSM data file to %s', self.workDir)
-        msg = proc_exec(proc, self.verbose)
+        exit_code, msg = proc_exec(proc.args, self.verbose)
 
-        if proc.returncode != 0:
+        if exit_code != 0:
             LOG.error('OSM data file download process has not exited cleanly!')
             LOG.error(msg)
             sys.exit(99)
@@ -75,9 +75,9 @@ class OSMmanagement():
         )
         # execute the process ... .wait()
         LOG.info('Converting OSM data file to %s', datafile)
-        msg = proc_exec(proc, self.verbose)
+        exit_code, msg = proc_exec(proc.args, self.verbose)
 
-        if proc.returncode != 0:
+        if exit_code != 0:
             LOG.error('OSM PBF to O5M file conversion has not exited cleanly!')
             LOG.error(msg)
             sys.exit(99)
@@ -123,9 +123,9 @@ class OSMmanagement():
             )
             LOG.info('Updating OSM data file %s ...', datafile)
 
-        msg = proc_exec(proc, self.verbose)
+        exit_code, msg = proc_exec(proc.args, self.verbose)
 
-        if proc.returncode != 0:
+        if exit_code != 0:
             LOG.error('OSM update has not exited cleanly!')
             LOG.error(msg)
             sys.exit(99)
@@ -152,9 +152,10 @@ class OSMmanagement():
         LOG.info('Extracting "admin_levels" from OSM file %s ...', datafile)
 
         # execute the process ... .wait()
-        msg = proc_exec(proc, self.verbose)
+        exit_code, msg = proc_exec(proc.args, self.verbose)
 
-        if proc.returncode != 0:
+
+        if exit_code != 0:
             LOG.error('OSM filter has not exited cleanly!')
             LOG.error(msg)
             sys.exit(99)
@@ -179,9 +180,9 @@ class OSMmanagement():
         LOG.info('Converting %s to %s ...', datafile, new_datafile)
 
         # execute the process ... .wait()
-        msg = proc_exec(proc, self.verbose)
+        exit_code, msg = proc_exec(proc.args, self.verbose)
 
-        if proc.returncode != 0:
+        if exit_code != 0:
             LOG.error('OSM convert has not exited cleanly!')
             LOG.error(msg)
             sys.exit(99)

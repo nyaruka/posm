@@ -55,7 +55,7 @@ def check_bad_geom(geom, osm_id):
     try:
         # check if we can parse the geom and determine why is geometry
         # invalid
-        tst_geom = shapely.wkb.loads(geom.ExportToWkb())
+        tst_geom = shapely.wkb.loads(bytes(geom.ExportToWkb()))
         if tst_geom.is_valid:
             return False
         else:
