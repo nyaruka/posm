@@ -86,7 +86,7 @@ def download_from_overpass(relation_ids, level=0, country=""):
         children += relation_children
 
         # get our admin level
-        admin_level = root.find('./relation/tag[@k="admin_level"]').get("v")
+        #admin_level = root.find('./relation/tag[@k="admin_level"]').get("v")
 
         # and our names in local and English
         name = root.find('./relation/tag[@k="name"]').get("v")
@@ -98,19 +98,19 @@ def download_from_overpass(relation_ids, level=0, country=""):
             f.write(str(metadata.content))
 
         # convert to geojson
-        converted = subprocess.check_output(["/Users/nicp/.nvm/versions/node/v12.16.1/bin/osmtogeojson", "feature.osm"])
+        converted = subprocess.check_output(["./node_modules/osmtogeojson/osmtogeojson", "feature.osm"])
         features = json.loads(converted)
 
         found = False
         for feature in features["features"]:
             if feature["id"] == f"relation/{relation_id}":
                 feature["properties"]["osm_id"] = f"{relation_id}"
-                feature["properties"]["name"] = decode_utf8(feature["properties"]["name"])
+                feature["properties"]["name"] = decode_utf8(feature["properties"].get("name_en", name))
                 feature["properties"]["name_en"] = decode_utf8(feature["properties"].get("name_en", name))
                 geojson["features"].append(feature)
                 found = True
 
-        if not found:
+        if not found and level == 0:
             raise Exception(f"unable to find feature {relation_id} in generated geojson")
 
         time.sleep(5)
@@ -155,6 +155,8 @@ def main(settings, problems_geojson, relation_id):
         osm_id = feature.GetField("osm_id")
         name = feature.GetField('name')
         name_en = feature.GetField('name_en')
+        if not name_en:
+            name_en = name
 
         geom_raw = ogr.ForceToMultiPolygon(feature.GetGeometryRef())
 
@@ -177,7 +179,7 @@ def main(settings, problems_geojson, relation_id):
                 writeProblem(problems_datasource, osm_id, bad_geom)
             continue
 
-        geom = shapely.wkb.loads(geom_raw.ExportToWkb())
+        geom = shapely.wkb.loads(bytes(geom_raw.ExportToWkb()))
 
         lyr_save.saveFeature(feature_data, geom_raw)
         admin_level_0.update({osm_id: prep(geom)})
@@ -212,6 +214,8 @@ def main(settings, problems_geojson, relation_id):
         osm_id = feature.GetField("osm_id")
         name = feature.GetField('name')
         name_en = feature.GetField('name_en')
+        if not name_en:
+            name_en = name
 
         geom_raw = ogr.ForceToMultiPolygon(feature.GetGeometryRef())
 
@@ -222,7 +226,7 @@ def main(settings, problems_geojson, relation_id):
             )
             continue
 
-        geom = shapely.wkb.loads(geom_raw.ExportToWkb())
+        geom = shapely.wkb.loads(bytes(geom_raw.ExportToWkb()))
 
         # check spatial relationship
         # representative point is guaranteed within polygon
@@ -268,6 +272,8 @@ def main(settings, problems_geojson, relation_id):
             osm_id = feature.GetField("osm_id")
             name = feature.GetField('name')
             name_en = feature.GetField('name_en')
+            if not name_en:
+                name_en = name
 
             geom_raw = ogr.ForceToMultiPolygon(feature.GetGeometryRef())
 
@@ -278,7 +284,7 @@ def main(settings, problems_geojson, relation_id):
                 )
                 continue
 
-            geom = shapely.wkb.loads(geom_raw.ExportToWkb())
+            geom = shapely.wkb.loads(bytes(geom_raw.ExportToWkb()))
 
             # representative point is guaranteed within polygon
             geom_repr = geom.representative_point()

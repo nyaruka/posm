@@ -5,3 +5,4 @@ env
 *.zip
 problems.geojson
 *yaml
+node_modules

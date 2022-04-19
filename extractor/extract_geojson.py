@@ -77,7 +77,7 @@ def main(settings, problems_geojson):
                 writeProblem(problems_datasource, osm_id, bad_geom)
             continue
 
-        geom = shapely.wkb.loads(geom_raw.ExportToWkb())
+        geom = shapely.wkb.loads(bytes(geom_raw.ExportToWkb()))
 
         lyr_save.saveFeature(feature_data, geom_raw)
         admin_level_0.update({osm_id: prep(geom)})
@@ -123,7 +123,7 @@ def main(settings, problems_geojson):
             )
             continue
 
-        geom = shapely.wkb.loads(geom_raw.ExportToWkb())
+        geom = shapely.wkb.loads(bytes(geom_raw.ExportToWkb()))
 
         # check spatial relationship
         # representative point is guaranteed within polygon
@@ -182,7 +182,7 @@ def main(settings, problems_geojson):
                 )
                 continue
 
-            geom = shapely.wkb.loads(geom_raw.ExportToWkb())
+            geom = shapely.wkb.loads(bytes(geom_raw.ExportToWkb()))
 
             # representative point is guaranteed within polygon
             geom_repr = geom.representative_point()

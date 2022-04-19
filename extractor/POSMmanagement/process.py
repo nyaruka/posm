@@ -37,10 +37,10 @@ class ProcessManagement():
         )
         exit_code, msg = proc_exec(command, self.verbose)
 
-        if exit_code != 0:
-            LOG.error('Admin level processing has not exited cleanly!')
-            LOG.error(msg)
-            sys.exit(99)
+        # if exit_code != 0:
+        #     LOG.error('Admin level processing has not exited cleanly!')
+        #     LOG.error(msg)
+        #     sys.exit(99)
 
     def processAdminLevelsGADM(self, settings_file):
         command = [

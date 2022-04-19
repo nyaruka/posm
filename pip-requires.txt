@@ -1,4 +1,4 @@
-GDAL==3.4.2
+GDAL
 psycopg2==2.9.3
 PyYAML==6.0
 Rtree==1.0.0
