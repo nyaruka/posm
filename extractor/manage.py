@@ -18,7 +18,7 @@ def update_data(args):
     proj_settings = POSMSettings(args.settings, verbose=args.verbose)
 
     osm_man = OSMmanagement(proj_settings, verbose=args.verbose)
-    osm_man.updateOSM()
+    #osm_man.updateOSM()
     osm_man.extractAdminLevels()
     osm_man.convertO5MtoPBF()
 
