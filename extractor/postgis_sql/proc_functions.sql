@@ -13,9 +13,9 @@ PERFORM AddTopoGeometryColumn('admin_topo', 'public', 'all_geom', 'topo', 'MULTI
 
 -- add internal logging table
 BEGIN
-	DROP TABLE create_base_topology_log;
-	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN
+    DROP TABLE create_base_topology_log;
+    EXCEPTION
+        WHEN SQLSTATE '42P01' THEN
 END;
 CREATE TABLE create_base_topology_log (osm_id varchar(255), duration interval);
 
@@ -38,19 +38,19 @@ select count(*) INTO t_count FROM all_geom;
 
 --FOR rec in SELECT * FROM all_geom order by osm_id ASC LOOP
 FOR rec in SELECT * FROM all_geom LOOP
-	BEGIN
-		start_time = clock_timestamp();
-		RAISE NOTICE 'Working on %/% - %', t_current, t_count, rec.osm_id;
-		UPDATE all_geom SET topo = toTopoGeom(wkb_geometry, 'admin_topo', (SELECT layer_id from topology.layer where feature_column = 'topo'))
-		WHERE osm_id = rec.osm_id;
-		-- add info to the log table
-		INSERT INTO create_base_topology_log VALUES (rec.osm_id, clock_timestamp() - start_time);
-	EXCEPTION
-		WHEN OTHERS THEN
-			RAISE WARNING 'Topology generation failed, removing feature % - %', rec.osm_id, SQLERRM;
-			DELETE FROM all_geom WHERE osm_id = rec.osm_id;
-	END;
-	t_current:=t_current + 1;
+    BEGIN
+        start_time = clock_timestamp();
+        RAISE NOTICE 'Working on %/% - %', t_current, t_count, rec.osm_id;
+        UPDATE all_geom SET topo = toTopoGeom(wkb_geometry, 'admin_topo', (SELECT layer_id from topology.layer where feature_column = 'topo'))
+        WHERE osm_id = rec.osm_id;
+        -- add info to the log table
+        INSERT INTO create_base_topology_log VALUES (rec.osm_id, clock_timestamp() - start_time);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE WARNING 'Topology generation failed, removing feature % - %', rec.osm_id, SQLERRM;
+            DELETE FROM all_geom WHERE osm_id = rec.osm_id;
+    END;
+    t_current:=t_current + 1;
 END LOOP;
 END;
 $func$
@@ -66,16 +66,16 @@ BEGIN
 
 -- internal transaction
 BEGIN
-	start_time = clock_timestamp();
-	RAISE NOTICE 'Working on %', $1;
-	UPDATE all_geom SET topo = toTopoGeom(wkb_geometry, 'admin_topo', (SELECT layer_id from topology.layer where feature_column = 'topo'))
-	WHERE osm_id = $1;
-	-- add info to the log table
-	INSERT INTO create_base_topology_log VALUES ($1, clock_timestamp() - start_time);
+    start_time = clock_timestamp();
+    RAISE NOTICE 'Working on %', $1;
+    UPDATE all_geom SET topo = toTopoGeom(wkb_geometry, 'admin_topo', (SELECT layer_id from topology.layer where feature_column = 'topo'))
+    WHERE osm_id = $1;
+    -- add info to the log table
+    INSERT INTO create_base_topology_log VALUES ($1, clock_timestamp() - start_time);
 EXCEPTION
-	WHEN OTHERS THEN
-		RAISE WARNING 'Topology generation failed, removing feature % - %', $1, SQLERRM;
-		DELETE FROM all_geom WHERE osm_id = $1;
+    WHEN OTHERS THEN
+        RAISE WARNING 'Topology generation failed, removing feature % - %', $1, SQLERRM;
+        DELETE FROM all_geom WHERE osm_id = $1;
 END;
 END;
 $func$
@@ -93,75 +93,75 @@ BEGIN
 
 -- prepare geom table
 BEGIN
-	DROP TABLE all_geom;
-	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN
+    DROP TABLE all_geom;
+    EXCEPTION
+        WHEN SQLSTATE '42P01' THEN
 END;
 CREATE TABLE all_geom (osm_id varchar(255), is_in_state varchar(255), is_in_country varchar(255), adminlevel integer, wkb_geometry GEOMETRY(MULTIPOLYGON,4326));
 
   tmp_id:=0;
 
   FOR rec in SELECT * FROM admin_level_1 order by osm_id ASC LOOP
-	RAISE NOTICE 'admin_level_1, %', rec.osm_id;
-	BEGIN
-		select st_multi(st_difference(a.wkb_geometry, (
-			select st_union(b.wkb_geometry) from admin_level_2 b
-			WHERE b.is_in = rec.osm_id)))
-		INTO t_geom from admin_level_1 a where a.osm_id=rec.osm_id;
-	EXCEPTION
-		WHEN OTHERS THEN
-			RAISE WARNING 'Cannot calculate geometry difference, skipping ...  %', SQLERRM;
-			CONTINUE; -- skip this iteration, don't process this feature
-	END;
+    RAISE NOTICE 'admin_level_1, %', rec.osm_id;
+    BEGIN
+        select ST_MakeValid(st_multi(st_difference(ST_MakeValid(a.wkb_geometry), (
+            select ST_MakeValid(st_union(ST_MakeValid(b.wkb_geometry))) from admin_level_2 b
+            WHERE b.is_in = rec.osm_id))))
+        INTO t_geom from admin_level_1 a where a.osm_id=rec.osm_id;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE WARNING 'Cannot calculate geometry difference, skipping ...  %', SQLERRM;
+            CONTINUE; -- skip this iteration, don't process this feature
+    END;
 
-	if ST_isempty(t_geom) THEN
-		RAISE DEBUG 'Good data %', rec.osm_id;
-		-- add admin_level_2 geom
-		insert into all_geom SELECT osm_id, is_in, rec.is_in, adminlevel, wkb_geometry from admin_level_2 where is_in = rec.osm_id;
-	ELSIF t_geom IS NULL THEN
-		RAISE DEBUG 'No data %', rec.osm_id;
-		-- add admin_level_1 geom
-		insert into all_geom VALUES (rec.osm_id, NULL, rec.is_in, rec.adminlevel, rec.wkb_geometry);
-	ELSE
-		IF i_fill_holes THEN
-			RAISE NOTICE 'Filling %', rec.osm_id;
-			INSERT INTO all_geom VALUES ('xxx'||tmp_id::varchar, rec.osm_id, rec.is_in, rec.adminlevel, t_geom);
-			tmp_id:=tmp_id+1;
-		END IF;
-		insert into all_geom SELECT osm_id, is_in, rec.is_in, adminlevel, wkb_geometry from admin_level_2 where is_in = rec.osm_id;
-	END IF;
+    if ST_isempty(t_geom) THEN
+        RAISE DEBUG 'Good data %', rec.osm_id;
+        -- add admin_level_2 geom
+        insert into all_geom SELECT osm_id, is_in, rec.is_in, adminlevel, wkb_geometry from admin_level_2 where is_in = rec.osm_id;
+    ELSIF t_geom IS NULL THEN
+        RAISE DEBUG 'No data %', rec.osm_id;
+        -- add admin_level_1 geom
+        insert into all_geom VALUES (rec.osm_id, NULL, rec.is_in, rec.adminlevel, ST_MakeValid(rec.wkb_geometry));
+    ELSE
+        IF i_fill_holes THEN
+            RAISE NOTICE 'Filling %', rec.osm_id;
+            INSERT INTO all_geom VALUES ('xxx'||tmp_id::varchar, rec.osm_id, rec.is_in, rec.adminlevel, ST_MakeValid(t_geom));
+            tmp_id:=tmp_id+1;
+        END IF;
+        insert into all_geom SELECT osm_id, is_in, rec.is_in, adminlevel, wkb_geometry from admin_level_2 where is_in = rec.osm_id;
+    END IF;
   END LOOP;
 
 FOR rec IN SELECT * FROM admin_level_0 order by osm_id ASC LOOP
-	RAISE NOTICE 'admin_level_0, %', rec.osm_id;
-	BEGIN
-		select st_multi(st_difference(rec.wkb_geometry, (
-			select st_union(wkb_geometry) from all_geom where
-				is_in_state in (select osm_id from admin_level_1 where is_in = rec.osm_id) OR
-				osm_id in (select osm_id from admin_level_1 where is_in = rec.osm_id))))
-			into t_geom from admin_level_0 a where a.osm_id=rec.osm_id;
-	EXCEPTION
-		WHEN OTHERS THEN
-			RAISE WARNING 'Cannot calculate geometry difference, skipping ...  %', SQLERRM;
-			CONTINUE; -- skip this iteration, don't process this feature
-	END;
+    RAISE NOTICE 'admin_level_0, %', rec.osm_id;
+    BEGIN
+        select ST_MakeValid(st_multi(st_difference(ST_MakeValid(rec.wkb_geometry), (
+            select ST_MakeValid(st_union(ST_MakeValid(wkb_geometry))) from all_geom where
+                is_in_state in (select osm_id from admin_level_1 where is_in = rec.osm_id) OR
+                osm_id in (select osm_id from admin_level_1 where is_in = rec.osm_id)))), 'method=structure')
+            into t_geom from admin_level_0 a where a.osm_id=rec.osm_id;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE WARNING 'Cannot calculate geometry difference, skipping ...  %', SQLERRM;
+            CONTINUE; -- skip this iteration, don't process this feature
+    END;
 
-	if ST_isempty(t_geom) THEN
-		RAISE DEBUG 'Good data %', rec.osm_id;
-		-- add admin_level_1 geom
-		 -- insert into all_geom SELECT osm_id, is_in, adminlevel, wkb_geometry from admin_level_1 where is_in = rec.osm_id;
-	ELSIF t_geom IS NULL THEN
-		RAISE NOTICE 'No data %', rec.osm_id;
-		-- add admin_level_0 geom
-		insert into all_geom VALUES (rec.osm_id, NULL, NULL, rec.adminlevel, rec.wkb_geometry);
-	ELSE
-		IF i_fill_holes THEN
-			RAISE NOTICE 'Filling %', rec.osm_id;
-			INSERT INTO all_geom VALUES ('xxx'||tmp_id::varchar, NULL, rec.osm_id, rec.adminlevel, t_geom);
-			tmp_id:=tmp_id+1;
-		END IF;
-		-- insert into all_geom SELECT osm_id, is_in, adminlevel, wkb_geometry from admin_level_1 where is_in = rec.osm_id;
-	END IF;
+    if ST_isempty(t_geom) THEN
+        RAISE DEBUG 'Good data %', rec.osm_id;
+        -- add admin_level_1 geom
+         -- insert into all_geom SELECT osm_id, is_in, adminlevel, wkb_geometry from admin_level_1 where is_in = rec.osm_id;
+    ELSIF t_geom IS NULL THEN
+        RAISE NOTICE 'No data %', rec.osm_id;
+        -- add admin_level_0 geom
+        insert into all_geom VALUES (rec.osm_id, NULL, NULL, rec.adminlevel, ST_MakeValid(rec.wkb_geometry));
+    ELSE
+        IF i_fill_holes THEN
+            RAISE NOTICE 'Filling %', rec.osm_id;
+            INSERT INTO all_geom VALUES ('xxx'||tmp_id::varchar, NULL, rec.osm_id, rec.adminlevel, ST_MakeValid(t_geom));
+            tmp_id:=tmp_id+1;
+        END IF;
+        -- insert into all_geom SELECT osm_id, is_in, adminlevel, wkb_geometry from admin_level_1 where is_in = rec.osm_id;
+    END IF;
 
 END LOOP;
 END;
@@ -179,30 +179,30 @@ BEGIN
 
 RAISE NOTICE 'Simplifying base topology....';
 BEGIN
-	drop table simple_admin_all CASCADE;
-	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN
-		-- do nothing
+    drop table simple_admin_all CASCADE;
+    EXCEPTION
+        WHEN SQLSTATE '42P01' THEN
+        -- do nothing
 END;
 q1:= 'create table simple_admin_all AS
 select all_geom.osm_id, all_geom.is_in_state,all_geom.is_in_country, ST_simplify(topo, $1) as wkb_geometry
 from all_geom ';
 
 IF array_length(i_osmid_list,1) > 0 THEN
-	condition:= 'WHERE is_in_country = ANY($2) OR osm_id = ANY($2)';
-	q1:=q1||condition;
-	EXECuTE q1 USING i_tolerance, i_osmid_list;
+    condition:= 'WHERE is_in_country = ANY($2) OR osm_id = ANY($2)';
+    q1:=q1||condition;
+    EXECuTE q1 USING i_tolerance, i_osmid_list;
 ELSE
-	EXECUTE q1 USING i_tolerance;
+    EXECUTE q1 USING i_tolerance;
 END IF;
 
 RAISE NOTICE 'Creating simple_admin_2...';
 -- simplify county
 BEGIN
-	drop table simple_admin_2 CASCADE;
-	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN
-		-- do nothing
+    drop table simple_admin_2 CASCADE;
+    EXCEPTION
+        WHEN SQLSTATE '42P01' THEN
+        -- do nothing
 END;
 
 
@@ -212,11 +212,11 @@ from simple_admin_all
 where is_in_state is not null and left(osm_id,3) != 'xxx' $$;
 
 IF array_length(i_osmid_list,1) > 0 THEN
-	condition:= ' AND is_in_country = ANY($1)';
-	q1:=q1||condition;
-	EXECuTE q1 USING i_osmid_list;
+    condition:= ' AND is_in_country = ANY($1)';
+    q1:=q1||condition;
+    EXECuTE q1 USING i_osmid_list;
 ELSE
-	EXECUTE q1;
+    EXECUTE q1;
 END IF;
 
 
@@ -224,10 +224,10 @@ END IF;
 -- simplify state
 RAISE NOTICE 'Creating simple_admin_1...';
 BEGIN
-	drop table simple_admin_1 CASCADE;
-	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN
-		-- do nothing
+    drop table simple_admin_1 CASCADE;
+    EXCEPTION
+        WHEN SQLSTATE '42P01' THEN
+        -- do nothing
 END;
 
 
@@ -242,22 +242,22 @@ from simple_admin_all
 where is_in_state is null and left(osm_id,3)!= 'xxx'$$;
 
 IF array_length(i_osmid_list,1) > 0 THEN
-	condition:= ' and is_in_country = ANY($1)';
-	q1:=q1||condition||'group by is_in_state UNION '||q2||condition||' group by osm_id';
-	EXECuTE q1 USING i_osmid_list;
+    condition:= ' and is_in_country = ANY($1)';
+    q1:=q1||condition||'group by is_in_state UNION '||q2||condition||' group by osm_id';
+    EXECuTE q1 USING i_osmid_list;
 ELSE
-	q1:=q1||'group by is_in_state UNION '||q2||' group by osm_id';
-	EXECUTE q1;
+    q1:=q1||'group by is_in_state UNION '||q2||' group by osm_id';
+    EXECUTE q1;
 END IF;
 
 
 -- simplify country
 RAISE NOTICE 'Creating simple_admin_0...';
 BEGIN
-	drop table simple_admin_0 CASCADE;
-	EXCEPTION
-		WHEN SQLSTATE '42P01' THEN
-		-- do nothing
+    drop table simple_admin_0 CASCADE;
+    EXCEPTION
+        WHEN SQLSTATE '42P01' THEN
+        -- do nothing
 END;
 
 q1:=$$create table simple_admin_0 as
@@ -269,12 +269,12 @@ from simple_admin_all
 where is_in_country is null and is_in_state is null and left(osm_id,3)!= 'xxx'$$;
 
 IF array_length(i_osmid_list,1) > 0 THEN
-	condition:= ' WHERE is_in_country = ANY($1)';
-	q1:=q1||condition||$$ group by is_in_country$$;
-	EXECuTE q1 USING i_osmid_list;
+    condition:= ' WHERE is_in_country = ANY($1)';
+    q1:=q1||condition||$$ group by is_in_country$$;
+    EXECuTE q1 USING i_osmid_list;
 ELSE
-	q1:=q1||$$ group by is_in_country UNION $$||q2;
-	EXECUTE q1;
+    q1:=q1||$$ group by is_in_country UNION $$||q2;
+    EXECUTE q1;
 END IF;
 
 

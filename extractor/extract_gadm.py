@@ -71,8 +71,8 @@ def main(settings, problems_geojson):
     for layer, feature in lyr_read.readData():
 
         osm_id = '{}0'.format(feature.GetField('GID_0'))  # append 0 to the osm_id to satisfy import_geojson checks
-        name = feature.GetField('name_0')
-        name_en = feature.GetField('name_0')
+        name = feature.GetField('COUNTRY')
+        name_en = feature.GetField('COUNTRY')
         # iso3166 = 'NG'
         geom_raw = ogr.ForceToMultiPolygon(feature.GetGeometryRef())
 
