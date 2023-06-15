@@ -91,6 +91,7 @@ class ProcessManagement():
             cur.execute('update admin_level_0 set wkb_geometry = st_snaptogrid(wkb_geometry, %s)', (grid_size,))
             cur.execute('update admin_level_1 set wkb_geometry = st_snaptogrid(wkb_geometry, %s)', (grid_size,))
             cur.execute('update admin_level_2 set wkb_geometry = st_snaptogrid(wkb_geometry, %s)', (grid_size,))
+            cur.execute('update admin_level_3 set wkb_geometry = st_snaptogrid(wkb_geometry, %s)', (grid_size,))
             conn.commit()
 
         except psycopg2.ProgrammingError as e:

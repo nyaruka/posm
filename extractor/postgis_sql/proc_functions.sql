@@ -101,6 +101,37 @@ CREATE TABLE all_geom (osm_id varchar(255), is_in_state varchar(255), is_in_coun
 
   tmp_id:=0;
 
+  FOR rec in SELECT * FROM admin_level_2 order by osm_id ASC LOOP
+    RAISE NOTICE 'admin_level_2, %', rec.osm_id;
+    BEGIN
+        select ST_MakeValid(st_multi(st_difference(ST_MakeValid(a.wkb_geometry), (
+            select ST_MakeValid(st_union(ST_MakeValid(b.wkb_geometry))) from admin_level_3 b
+            WHERE b.is_in = rec.osm_id))))
+        INTO t_geom from admin_level_2 a where a.osm_id=rec.osm_id;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE WARNING 'Cannot calculate geometry difference, skipping ...  %', SQLERRM;
+            CONTINUE; -- skip this iteration, don't process this feature
+    END;
+
+    if ST_isempty(t_geom) THEN
+        RAISE DEBUG 'Good data %', rec.osm_id;
+        -- add admin_level_3 geom
+        insert into all_geom SELECT osm_id, is_in, rec.is_in, adminlevel, wkb_geometry from admin_level_3 where is_in = rec.osm_id;
+    ELSIF t_geom IS NULL THEN
+        RAISE DEBUG 'No data %', rec.osm_id;
+        -- add admin_level_1 geom
+        insert into all_geom VALUES (rec.osm_id, NULL, rec.is_in, rec.adminlevel, ST_MakeValid(rec.wkb_geometry));
+    ELSE
+        IF i_fill_holes THEN
+            RAISE NOTICE 'Filling %', rec.osm_id;
+            INSERT INTO all_geom VALUES ('xxx'||tmp_id::varchar, rec.osm_id, rec.is_in, rec.adminlevel, ST_MakeValid(t_geom));
+            tmp_id:=tmp_id+1;
+        END IF;
+        insert into all_geom SELECT osm_id, is_in, rec.is_in, adminlevel, wkb_geometry from admin_level_3 where is_in = rec.osm_id;
+    END IF;
+  END LOOP;
+
   FOR rec in SELECT * FROM admin_level_1 order by osm_id ASC LOOP
     RAISE NOTICE 'admin_level_1, %', rec.osm_id;
     BEGIN
@@ -185,7 +216,7 @@ BEGIN
         -- do nothing
 END;
 q1:= 'create table simple_admin_all AS
-select all_geom.osm_id, all_geom.is_in_state,all_geom.is_in_country, ST_simplify(topo, $1) as wkb_geometry
+select all_geom.osm_id, all_geom.is_in_state,all_geom.is_in_country, all_geom.adminlevel, ST_simplify(topo, $1) as wkb_geometry
 from all_geom ';
 
 IF array_length(i_osmid_list,1) > 0 THEN
@@ -195,6 +226,30 @@ IF array_length(i_osmid_list,1) > 0 THEN
 ELSE
     EXECUTE q1 USING i_tolerance;
 END IF;
+
+RAISE NOTICE 'Creating simple_admin_3...';
+-- simplify county
+BEGIN
+    drop table simple_admin_3 CASCADE;
+    EXCEPTION
+        WHEN SQLSTATE '42P01' THEN
+        -- do nothing
+END;
+
+
+-- for county
+q1:= $$create table simple_admin_3 as select osm_id, wkb_geometry
+from simple_admin_all
+where is_in_state is not null and left(osm_id,3) != 'xxx' and adminlevel = 3 $$;
+
+IF array_length(i_osmid_list,1) > 0 THEN
+    condition:= ' AND is_in_country = ANY($1)';
+    q1:=q1||condition;
+    EXECuTE q1 USING i_osmid_list;
+ELSE
+    EXECUTE q1;
+END IF;
+
 
 RAISE NOTICE 'Creating simple_admin_2...';
 -- simplify county
@@ -298,6 +353,13 @@ FROM admin_level_0 ad0 INNER JOIN admin_level_1 ad1 ON ad0.osm_id = ad1.is_in
     INNER JOIN admin_level_2 ad2 ON ad1.osm_id = ad2.is_in
     INNER JOIN simple_admin_2 sa2 ON ad2.osm_id = sa2.osm_id;
 
+CREATE VIEW simple_admin_3_view AS
+
+SELECT ad3.osm_id, ad3.name, ad3.name_en, sa3.wkb_geometry, ad0.osm_id as is_in_country, ad2.osm_id as is_in_state, ad3.wkb_geometry as natural_wkb_geometry
+FROM admin_level_0 ad0 INNER JOIN admin_level_1 ad1 ON ad0.osm_id = ad1.is_in
+    INNER JOIN admin_level_2 ad2 ON ad1.osm_id = ad2.is_in
+    INNER JOIN admin_level_3 ad3 ON ad2.osm_id = ad3.is_in
+    INNER JOIN simple_admin_3 sa3 ON ad3.osm_id = sa3.osm_id;
 
 END;
 $func$
