@@ -37,10 +37,10 @@ class ProcessManagement():
         )
         exit_code, msg = proc_exec(command, self.verbose)
 
-        if exit_code != 0:
-            LOG.error('Admin level processing has not exited cleanly!')
-            LOG.error(msg)
-            sys.exit(99)
+        # if exit_code != 0:
+        #     LOG.error('Admin level processing has not exited cleanly!')
+        #     LOG.error(msg)
+        #     sys.exit(99)
 
     def processAdminLevelsGADM(self, settings_file):
         command = [
@@ -91,6 +91,7 @@ class ProcessManagement():
             cur.execute('update admin_level_0 set wkb_geometry = st_snaptogrid(wkb_geometry, %s)', (grid_size,))
             cur.execute('update admin_level_1 set wkb_geometry = st_snaptogrid(wkb_geometry, %s)', (grid_size,))
             cur.execute('update admin_level_2 set wkb_geometry = st_snaptogrid(wkb_geometry, %s)', (grid_size,))
+            cur.execute('update admin_level_3 set wkb_geometry = st_snaptogrid(wkb_geometry, %s)', (grid_size,))
             conn.commit()
 
         except psycopg2.ProgrammingError as e:

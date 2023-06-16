@@ -98,6 +98,15 @@ def main(settings, admin_levels, problems_geojson):
         admin_level = feature.GetField('admin_level')
         name = feature.GetField('name')
         name_en = feature.GetField('name:en')
+        if not name_en:
+            name_en = name
+
+        if not name_en:
+            print("Missing name for " + "=" * 80 + " " + admin_level)
+            print(feature.items())
+            print("=" * 80)
+            continue
+
         iso3166 = feature.GetField('ISO3166-1')
         if iso3166:
             iso3166 = iso3166.upper()
@@ -127,13 +136,13 @@ def main(settings, admin_levels, problems_geojson):
             # skip further processing
             continue
 
-        geom = shapely.wkb.loads(geom_raw.ExportToWkb())
+        geom = shapely.wkb.loads(bytes(geom_raw.ExportToWkb()))
 
         # process national level boundary
         if admin_level == '2':
             feature_data = [
                 ('osm_id', osm_id),
-                ('name', name),
+                ('name', name_en),
                 ('name_en', name_en),
                 ('adminlevel', admin_level),
                 ('iso3166', iso3166),
@@ -175,6 +184,16 @@ def main(settings, admin_levels, problems_geojson):
         admin_level = feature.GetField('admin_level')
         name = feature.GetField('name')
         name_en = feature.GetField('name:en')
+        if not name_en:
+            name_en = name
+
+        if not name_en:
+            print("Missing name for " + "=" * 80 + " " + admin_level)
+            print(feature.items())
+            print("=" * 80)
+            continue
+
+
         geom_raw = feature.GetGeometryRef()
 
         feature_data = []
@@ -186,7 +205,7 @@ def main(settings, admin_levels, problems_geojson):
             )
             continue
 
-        geom = shapely.wkb.loads(geom_raw.ExportToWkb())
+        geom = shapely.wkb.loads(bytes(geom_raw.ExportToWkb()))
 
         # check spatial relationship
         # representative point is guaranteed within polygon
@@ -229,7 +248,7 @@ def main(settings, admin_levels, problems_geojson):
 
             feature_data = [
                 ('osm_id', osm_id),
-                ('name', name),
+                ('name', name_en),
                 ('name_en', name_en),
                 ('adminlevel', admin_level),
                 ('is_in', is_in)
@@ -261,6 +280,15 @@ def main(settings, admin_levels, problems_geojson):
         admin_level = feature.GetField('admin_level')
         name = feature.GetField('name')
         name_en = feature.GetField('name:en')
+        if not name_en:
+            name_en = name
+
+        if not name_en:
+            print("Missing name for " + "=" * 80 + " " + admin_level)
+            print(feature.items())
+            print("=" * 80)
+            continue
+
         geom_raw = feature.GetGeometryRef()
 
         feature_data = []
@@ -272,7 +300,7 @@ def main(settings, admin_levels, problems_geojson):
             )
             continue
 
-        geom = shapely.wkb.loads(geom_raw.ExportToWkb())
+        geom = shapely.wkb.loads(bytes(geom_raw.ExportToWkb()))
 
         # representative point is guaranteed within polygon
         geom_repr = geom.representative_point()
@@ -316,7 +344,7 @@ def main(settings, admin_levels, problems_geojson):
         if admin_level == str(search_admin_level):
             feature_data = [
                 ('osm_id', osm_id),
-                ('name', name),
+                ('name', name_en),
                 ('name_en', name_en),
                 ('adminlevel', admin_level),
                 ('is_in', is_in_state)

@@ -90,6 +90,11 @@ def create_GEOJSON(path, filename):
 
     layer.CreateField(is_in_s_def)
 
+    is_in_parent_def = ogr.FieldDefn('parent_id', ogr.OFTString)
+    is_in_parent_def.SetWidth(254)
+
+    layer.CreateField(is_in_parent_def)
+
     return GEOJSON_datasource
 
 
@@ -109,7 +114,7 @@ def write_feature(datasource, feature_data, feature_geom):
     new_feat = None
 
 
-def create_archive(directory):
+def create_archive(directory, name):
     """
     Use subprocess call to 'zip' to create a zip archive of created geojson
     files
@@ -117,7 +122,7 @@ def create_archive(directory):
     ..Note: built-in module zipfile was creating correct zip files with
     corrupted files
     """
-    filename = os.path.join(directory, 'exported_geojson.zip')
+    filename = os.path.join(directory, '%s_exported_geojson.zip' % name)
     LOG.info(f"Creating {filename} ..")
 
     if os.path.exists(filename):
@@ -144,6 +149,7 @@ def main(settings, cli_args):
     simple_ad0 = datasource.GetLayerByName('simple_admin_0_view')
     simple_ad1 = datasource.GetLayerByName('simple_admin_1_view')
     simple_ad2 = datasource.GetLayerByName('simple_admin_2_view')
+    simple_ad3 = datasource.GetLayerByName('simple_admin_3_view')
 
     # use provided arguments
     directory = settings.get('exposm').get('geojson_output_directory')
@@ -179,11 +185,13 @@ def main(settings, cli_args):
             ad0_iso3166 = feature0.GetField('iso3166')
             ad0_is_in_c = None
             ad0_is_in_s = None
+            ad0_is_in_parent = None
 
             ad0_attrs = [
                 ('osm_id', ad0_osm_id), ('is_in_country', ad0_is_in_c),
                 ('is_in_state', ad0_is_in_s), ('name', ad0_name),
-                ('name_en', ad0_name_en), ('iso3166', ad0_iso3166)
+                ('name_en', ad0_name_en), ('iso3166', ad0_iso3166),
+                ('parent_id', ad0_is_in_parent)
             ]
 
             filename = '{}admin{}{}.json'.format(ad0_osm_id, 0, '')
@@ -240,11 +248,13 @@ def main(settings, cli_args):
                 ad1_name_en = feature1.GetField('name_en')
                 ad1_is_in_s = None
                 ad1_iso3166 = None
+                ad1_is_in_parent = ad1_is_in_c
 
                 ad1_attrs = [
                     ('osm_id', ad1_osm_id), ('is_in_country', ad1_is_in_c),
                     ('is_in_state', ad1_is_in_s), ('name', ad1_name),
-                    ('name_en', ad1_name_en), ('iso3166', ad1_iso3166)
+                    ('name_en', ad1_name_en), ('iso3166', ad1_iso3166),
+                    ("parent_id", ad1_is_in_parent)
                 ]
 
                 write_feature(
@@ -287,11 +297,13 @@ def main(settings, cli_args):
                 ad2_is_in_c = feature2.GetField('is_in_country')
                 ad2_is_in_s = feature2.GetField('is_in_state')
                 ad2_iso3166 = None
+                ad2_is_in_parent = ad2_is_in_s
 
                 ad2_attrs = [
                     ('osm_id', ad2_osm_id), ('is_in_country', ad2_is_in_c),
                     ('is_in_state', ad2_is_in_s), ('name', ad2_name),
-                    ('name_en', ad2_name_en), ('iso3166', ad2_iso3166)
+                    ('name_en', ad2_name_en), ('iso3166', ad2_iso3166),
+                    ("parent_id", ad2_is_in_parent)
                 ]
 
                 write_feature(
@@ -308,11 +320,60 @@ def main(settings, cli_args):
             geojson_ds_county_simple = None
             geojson_ds_county_normal = None
 
+            # extract counties for a country
+            filename3 = '{}admin{}{}.json'.format(ad0_osm_id, 3, '')
+            filename3_sim = '{}admin{}{}.json'.format(
+                ad0_osm_id, 3, '_simplified'
+            )
+            geojson_ct_ward_normal = create_GEOJSON(
+                settings.get('exposm').get('geojson_output_directory'),
+                filename3
+            )
+            geojson_ct_ward_simple = create_GEOJSON(
+                settings.get('exposm').get('geojson_output_directory'),
+                filename3_sim
+            )
+            # extract states for a country
+            simple_ad3.SetAttributeFilter(
+                'is_in_country=\'{}\''.format(ad0_osm_id)
+            )
+            feature3 = simple_ad3.GetNextFeature()
+
+            while feature3:
+                ad3_osm_id = feature3.GetField('osm_id')
+                ad3_name = feature3.GetField('name')
+                ad3_name_en = feature3.GetField('name_en')
+                ad3_is_in_c = feature3.GetField('is_in_country')
+                ad3_is_in_s = feature3.GetField('is_in_state')
+                ad3_iso3166 = None
+                ad3_is_in_parent = ad3_is_in_s
+
+                ad3_attrs = [
+                    ('osm_id', ad3_osm_id), ('is_in_country', ad3_is_in_c),
+                    ('is_in_state', ad3_is_in_s), ('name', ad3_name),
+                    ('name_en', ad3_name_en), ('iso3166', ad3_iso3166),
+                    ("parent_id", ad3_is_in_parent)
+                ]
+
+                write_feature(
+                    geojson_ct_ward_normal, ad3_attrs,
+                    feature3.GetGeomFieldRef(1)
+                )
+                write_feature(
+                    geojson_ct_ward_simple, ad3_attrs,
+                    feature3.GetGeomFieldRef(0)
+                )
+
+                feature3 = simple_ad3.GetNextFeature()
+            # write feature to the state.geojson
+            geojson_ct_ward_simple = None
+            geojson_ct_ward_normal = None
+
         else:
             LOG.warning('Feature %s is missing ...', osm_id)
 
     if osm_ids:
-        create_archive(settings.get('sources').get('data_directory'))
+        create_archive(settings.get('sources').get('data_directory'), ad0_osm_id)
 
 
 if __name__ == '__main__':

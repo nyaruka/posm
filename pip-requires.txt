@@ -1,6 +1,5 @@
-GDAL==3.2.0
-numpy==1.19.4
-psycopg2==2.8.6
-PyYAML==5.3.1
-Rtree==0.9.4
-Shapely==1.7.1
+GDAL
+psycopg2==2.9.3
+PyYAML==6.0
+Rtree==1.0.0
+Shapely==1.8.1.post1
