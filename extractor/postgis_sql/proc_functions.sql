@@ -121,11 +121,11 @@ CREATE TABLE all_geom (osm_id varchar(255), is_in_state varchar(255), is_in_coun
     ELSIF t_geom IS NULL THEN
         RAISE DEBUG 'No data %', rec.osm_id;
         -- add admin_level_1 geom
-        insert into all_geom VALUES (rec.osm_id, NULL, rec.is_in, rec.adminlevel, ST_MakeValid(rec.wkb_geometry));
+        insert into all_geom VALUES (rec.osm_id, NULL, rec.is_in, rec.adminlevel, st_multi(st_collectionextract(ST_MakeValid(rec.wkb_geometry), 3)));
     ELSE
         IF i_fill_holes THEN
             RAISE NOTICE 'Filling %', rec.osm_id;
-            INSERT INTO all_geom VALUES ('xxx'||tmp_id::varchar, rec.osm_id, rec.is_in, rec.adminlevel, ST_MakeValid(t_geom));
+            INSERT INTO all_geom VALUES ('xxx'||tmp_id::varchar, rec.osm_id, rec.is_in, rec.adminlevel, st_multi(st_collectionextract(ST_MakeValid(t_geom), 3)));
             tmp_id:=tmp_id+1;
         END IF;
         insert into all_geom SELECT osm_id, is_in, rec.is_in, adminlevel, wkb_geometry from admin_level_3 where is_in = rec.osm_id;
@@ -152,11 +152,11 @@ CREATE TABLE all_geom (osm_id varchar(255), is_in_state varchar(255), is_in_coun
     ELSIF t_geom IS NULL THEN
         RAISE DEBUG 'No data %', rec.osm_id;
         -- add admin_level_1 geom
-        insert into all_geom VALUES (rec.osm_id, NULL, rec.is_in, rec.adminlevel, ST_MakeValid(rec.wkb_geometry));
+        insert into all_geom VALUES (rec.osm_id, NULL, rec.is_in, rec.adminlevel, st_multi(st_collectionextract(ST_MakeValid(rec.wkb_geometry), 3)));
     ELSE
         IF i_fill_holes THEN
             RAISE NOTICE 'Filling %', rec.osm_id;
-            INSERT INTO all_geom VALUES ('xxx'||tmp_id::varchar, rec.osm_id, rec.is_in, rec.adminlevel, ST_MakeValid(t_geom));
+            INSERT INTO all_geom VALUES ('xxx'||tmp_id::varchar, rec.osm_id, rec.is_in, rec.adminlevel, st_multi(st_collectionextract(ST_MakeValid(t_geom), 3)));
             tmp_id:=tmp_id+1;
         END IF;
         insert into all_geom SELECT osm_id, is_in, rec.is_in, adminlevel, wkb_geometry from admin_level_2 where is_in = rec.osm_id;
@@ -184,11 +184,11 @@ FOR rec IN SELECT * FROM admin_level_0 order by osm_id ASC LOOP
     ELSIF t_geom IS NULL THEN
         RAISE NOTICE 'No data %', rec.osm_id;
         -- add admin_level_0 geom
-        insert into all_geom VALUES (rec.osm_id, NULL, NULL, rec.adminlevel, ST_MakeValid(rec.wkb_geometry));
+        insert into all_geom VALUES (rec.osm_id, NULL, NULL, rec.adminlevel, st_multi(st_collectionextract(ST_MakeValid(rec.wkb_geometry),3)));
     ELSE
         IF i_fill_holes THEN
             RAISE NOTICE 'Filling %', rec.osm_id;
-            INSERT INTO all_geom VALUES ('xxx'||tmp_id::varchar, NULL, rec.osm_id, rec.adminlevel, ST_MakeValid(t_geom));
+            INSERT INTO all_geom VALUES ('xxx'||tmp_id::varchar, NULL, rec.osm_id, rec.adminlevel, st_multi(st_collectionextract(ST_MakeValid(t_geom), 3)));
             tmp_id:=tmp_id+1;
         END IF;
         -- insert into all_geom SELECT osm_id, is_in, adminlevel, wkb_geometry from admin_level_1 where is_in = rec.osm_id;
