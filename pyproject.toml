@@ -1,11 +1,23 @@
-[tool.poetry]
+[project]
 name = "posm"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = [
+    {"name" = "Nyaruka", "email" = "code@nyaruka.com"}
+]
+requires-python = ">=3.9,<3.13"
+
+dependencies =[ 
+    "psycopg2 (>=2.9.3)",
+    "GDAL (>=3.5.1)",
+    "PyYAML (>=6.0)",
+    "Rtree (>=1.0.0)",
+    "Shapely (>=1.8.4)",
+    "requests (>=2.28.1)",
+]
+
 
 [tool.poetry.dependencies]
-python = "^3.9"
 psycopg2 = "^2.9.3"
 GDAL = "^3.5.1"
 PyYAML = "^6.0"
@@ -13,7 +25,7 @@ Rtree = "^1.0.0"
 Shapely = "^1.8.4"
 requests = "^2.28.1"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
