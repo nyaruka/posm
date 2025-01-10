@@ -5,7 +5,7 @@ description = ""
 authors = [
     {"name" = "Nyaruka", "email" = "code@nyaruka.com"}
 ]
-requires-python = ">=3.9,<3.13"
+requires-python = ">=3.12"
 
 dependencies =[ 
     "psycopg2 (>=2.9.3)",
@@ -15,15 +15,6 @@ dependencies =[
     "Shapely (>=1.8.4)",
     "requests (>=2.28.1)",
 ]
-
-
-[tool.poetry.dependencies]
-psycopg2 = "^2.9.3"
-GDAL = "^3.5.1"
-PyYAML = "^6.0"
-Rtree = "^1.0.0"
-Shapely = "^1.8.4"
-requests = "^2.28.1"
 
 [tool.poetry.group.dev.dependencies]
 
