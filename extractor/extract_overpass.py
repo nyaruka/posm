@@ -89,7 +89,7 @@ def download_from_overpass(relation_ids, level=0, country=""):
         #admin_level = root.find('./relation/tag[@k="admin_level"]').get("v")
 
         # and our names in local and English
-        name = root.find('./relation/tag[@k="name"]').get("v")
+        name = root.find('./relation/tag[@k="name:en"]').get("v")
 
         if country == "":
             country = name
@@ -313,6 +313,55 @@ def main(settings, problems_geojson, relation_id):
         lyr_read.datasource = None
         lyr_save.datasource = None
 
+    lyr_save = AdminLevelWriter.create_postgis('admin_level_3', settings)
+    level3_file = files[3] if len(files) >= 4 else None
+    if level3_file is not None:
+        lyr_read = GEOJSONAdminLevelReader(level3_file)
+
+        for layer, feature in lyr_read.readData():
+            osm_id = feature.GetField("osm_id")
+            name = feature.GetField('name')
+            name_en = feature.GetField('name_en')
+            if not name_en:
+                name_en = name
+
+            geom_raw = ogr.ForceToMultiPolygon(feature.GetGeometryRef())
+
+            if osm_id in unusable_features:
+                # skip this feature
+                LOG.debug(
+                    'Feature previously marked as unusable: %s, skipping', osm_id
+                )
+                continue
+
+            geom = shapely.wkb.loads(bytes(geom_raw.ExportToWkb()))
+
+            # representative point is guaranteed within polygon
+            geom_repr = geom.representative_point()
+
+            is_in = intersect_geom(geom_repr, spat_index_0, admin_level_0)
+
+            is_in_state = intersect_geom(geom_repr, spat_index_1, admin_level_1)
+
+            if not(is_in_state):
+                # if we can't determine relationship, skip this feature
+                LOG.info('Missing state information ... %s', osm_id)
+                continue
+
+            feature_data = (
+                ('osm_id', osm_id),
+                ('name', name),
+                ('name_en', name_en),
+                ('adminlevel', 3),
+                ('iso3166', None),
+                ('is_in', is_in_state)
+            )
+
+            lyr_save.saveFeature(feature_data, geom_raw)
+            adm_2_temp.add(osm_id)
+
+        lyr_read.datasource = None
+        lyr_save.datasource = None
 
 parser = argparse.ArgumentParser(description='Extract admin levels (GEOJSON)')
 
