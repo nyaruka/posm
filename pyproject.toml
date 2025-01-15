@@ -9,7 +9,7 @@ requires-python = ">=3.12"
 
 dependencies =[ 
     "psycopg2 (>=2.9.3)",
-    "GDAL (>=3.5.1)",
+    "GDAL ~=3.5.1",
     "PyYAML (>=6.0)",
     "Rtree (>=1.0.0)",
     "Shapely (>=1.8.4)",
