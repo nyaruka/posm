@@ -60,8 +60,8 @@ def download_from_overpass(relation_ids, level=0, country=""):
     retry_strategy = Retry(
         total=10,
         backoff_factor=2,
-        status_forcelist=[429, 500, 502, 503, 504, 429],
-        method_whitelist=["HEAD", "GET", "OPTIONS"]
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["HEAD", "GET", "OPTIONS"],
     )
     adapter = HTTPAdapter(max_retries=retry_strategy)
     http = requests.Session()
