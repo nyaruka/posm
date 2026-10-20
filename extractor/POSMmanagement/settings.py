@@ -7,6 +7,9 @@ from osgeo import gdal
 
 from .utils import is_file_readable
 
+# opt in to the GDAL 4.0 default of raising exceptions instead of returning None (also applies to ogr and osr)
+gdal.UseExceptions()
+
 
 class POSMSettings():
     settings = {}

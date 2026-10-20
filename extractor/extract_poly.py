@@ -8,8 +8,7 @@ import itertools
 import os
 import sys
 
-import ogr
-import osr
+from osgeo import ogr, osr
 
 import shapely.wkb
 import shapely.geometry
