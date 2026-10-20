@@ -88,8 +88,13 @@ def download_from_overpass(relation_ids, level=0, country=""):
         # get our admin level
         #admin_level = root.find('./relation/tag[@k="admin_level"]').get("v")
 
-        # and our names in local and English
-        name = root.find('./relation/tag[@k="name:en"]').get("v")
+        # and our name, preferring English, then local, then the relation id
+        name = str(relation_id)
+        for key in ("name:en", "name"):
+            tag = root.find(f'./relation/tag[@k="{key}"]')
+            if tag is not None:
+                name = tag.get("v")
+                break
 
         if country == "":
             country = name
